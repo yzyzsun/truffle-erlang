@@ -22,4 +22,8 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 }
 
+generateGrammarSource {
+    arguments += ['-package', 'me.yzyzsun.jiro.parser']
+}
+
 mainClassName = 'me.yzyzsun.jiro.App'
