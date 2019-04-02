@@ -18,7 +18,7 @@ dependencies {
     antlr 'org.antlr:antlr4:4.7.2'
     implementation "org.graalvm.truffle:truffle-api:${graalvmVersion}"
     compileOnly "org.graalvm.truffle:truffle-dsl-processor:${graalvmVersion}"
-    implementation "com.typesafe.akka:akka-actor:2.5.21"
+    implementation "com.typesafe.akka:akka-actor_2.12:2.5.21"
     testImplementation 'junit:junit:4.12'
 }
 
