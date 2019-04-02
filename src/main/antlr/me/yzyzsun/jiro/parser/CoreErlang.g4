@@ -1,18 +1,11 @@
-// Derived from the Core Erlang 1.0.3 language specification
-
+/*
+    Adapted from the Core Erlang 1.0.3 language specification.
+    Optional annotations are removed for simplicity.
+*/
 grammar CoreErlang;
 
-annotatedModule
-    : module
-    | '(' module '-|' '[' (constant (',' constant)*)? ']' ')'
-    ;
-
 module
-    : 'module' ATOM moduleHeader moduleBody 'end'
-    ;
-
-moduleHeader
-    : exports attributes
+    : 'module' ATOM exports attributes functionDefinition* 'end'
     ;
 
 exports
@@ -31,200 +24,93 @@ moduleAttribute
     : ATOM '=' constant
     ;
 
-moduleBody
-    : functionDefinition*
-    ;
-
 functionDefinition
-    : annotatedFunctionName '=' annotatedFun
-    ;
-
-annotatedFunctionName
-    : functionName
-    | '(' functionName '-|' '[' (constant (',' constant)*)? ']' ')'
-    ;
-
-annotatedFun
-    : fun
-    | '(' fun '-|' '[' (constant (',' constant)*)? ']' ')'
+    : functionName '=' fun
     ;
 
 constant
-    : atomicLiteral
-    | '{' (constant (',' constant)*)? '}'
-    | '[' constant (',' constant)* ']'
-    | '[' constant (',' constant)* '|' constant ']'
+    : atomicLiteral # literalConstant
+    | '{' (constant (',' constant)*)? '}' # tupleConstant
+    | '[' constant (',' constant)* ']' # listConstant
+    | '[' constant (',' constant)* '|' constant ']' # consConstant
     ;
 
 atomicLiteral
-    : INTEGER
-    | FLOAT
-    | ATOM
-    | nil
-    | CHAR
-    | STRING
+    : INTEGER # integer
+    | FLOAT   # float
+    | CHAR    # char
+    | STRING  # string
+    | ATOM    # atom
+    | '[' ']' # nil
     ;
 
-nil
-    : '[' ']'
-    ;
-
-annotatedVariable
-    : VARIABLE_NAME
-    | '(' VARIABLE_NAME '-|' '[' (constant (',' constant)*)? ']' ')'
-    ;
-
-annotatedPattern
-    : annotatedVariable
-    | pattern
-    | '(' pattern '-|' '[' (constant (',' constant)*)? ']' ')'
-    ;
-
-pattern
-    : atomicLiteral
-    | '{' (annotatedPattern (',' annotatedPattern)*)? '}'
-    | '[' annotatedPattern (',' annotatedPattern)* ']'
-    | '[' annotatedPattern (',' annotatedPattern)* '|' annotatedPattern ']'
-    | '#' '{' (bitstringPattern (',' bitstringPattern)*)? '}' '#'
-    | annotatedVariable '=' annotatedPattern
-    ;
-
-bitstringPattern
-    : '#' '<' annotatedPattern '>' '(' (expression (',' expression)*)? ')'
+fun
+    : 'fun' '(' (VARIABLE_NAME (',' VARIABLE_NAME)*)? ')' '->' expression
     ;
 
 expression
-    : annotatedValueList
-    | annotatedSingleExpression
-    ;
-
-annotatedValueList
-    : valueList
-    | '(' valueList '-|' '[' (constant (',' constant)*)? ']' ')'
-    ;
-
-valueList
-    : '<' (annotatedSingleExpression (',' annotatedSingleExpression)*)? '>'
-    ;
-
-annotatedSingleExpression
     : singleExpression
-    | '(' singleExpression '-|' '[' (constant (',' constant)*)? ']' ')'
+    | '<' (singleExpression (',' singleExpression)*)? '>'
     ;
 
 singleExpression
-    : atomicLiteral
-    | VARIABLE_NAME
-    | functionName
-    | tuple
-    | list
-    | binary
-    | let
-    | case_
-    | fun
-    | letrec
-    | application
-    | interModuleCall
-    | primOpCall
-    | try_
-    | receive
-    | sequencing
-    | catch_
-    ;
-
-tuple
-    : '{' (expression (',' expression)*)? '}'
-    ;
-
-list
-    : '[' expression (',' expression)* ']'
-    | '[' expression (',' expression)* '|' expression ']'
-    ;
-
-binary
-    : '#' '{' (bitstring (',' bitstring)*)? '}' '#'
+    : VARIABLE_NAME # variable
+    | atomicLiteral # literal
+    | functionName # fname
+    | fun # f
+    | '{' (expression (',' expression)*)? '}' # tuple
+    | '[' expression (',' expression)* ']' # list
+    | '[' expression (',' expression)* '|' expression ']' # cons
+    | '#' '{' (bitstring (',' bitstring)*)? '}' '#' # binary
+    | 'let' variables '=' expression 'in' expression # let
+    | 'case' expression 'of' clause+ 'end' # case
+    | 'letrec' functionDefinition* 'in' expression # letrec
+    | 'apply' expression '(' (expression (',' expression)*)? ')' # application
+    | 'call' expression ':' expression '(' (expression (',' expression)*)? ')' # interModuleCall
+    | 'primop' ATOM '(' (expression (',' expression)*)? ')' # primOpCall
+    | 'try' expression 'of' variables '->' expression 'catch' variables '->' expression # try
+    | 'receive' clause* 'after' expression '->' expression # receive
+    | 'do' expression expression # sequencing
+    | 'catch' expression # catching
     ;
 
 bitstring
     : '#' '<' expression '>' '(' (expression (',' expression)*)? ')'
     ;
 
-let
-    : 'let' variables '=' expression 'in' expression
-    ;
-
 variables
-    : annotatedVariable
-    | '<' (annotatedVariable (',' annotatedVariable)*)? '>'
-    ;
-
-case_
-    : 'case' expression 'of' annotatedClause+ 'end'
-    ;
-
-annotatedClause
-    : clause
-    | '(' clause '-|' '[' (constant (',' constant)*)? ']' ')'
+    : VARIABLE_NAME
+    | '<' (VARIABLE_NAME (',' VARIABLE_NAME)*)? '>'
     ;
 
 clause
-    : patterns guard '->' expression
+    : patterns 'when' expression '->' expression
     ;
 
 patterns
-    : annotatedPattern
-    | '<' (annotatedPattern (',' annotatedPattern)*)? '>'
+    : pattern
+    | '<' (pattern (',' pattern)*)? '>'
     ;
 
-guard
-    : 'when' expression
+pattern
+    : VARIABLE_NAME # variablePattern
+    | atomicLiteral # literalPattern
+    | '{' (pattern (',' pattern)*)? '}' # tuplePattern
+    | '[' pattern (',' pattern)* ']' # listPattern
+    | '[' pattern (',' pattern)* '|' pattern ']' # consPattern
+    | '#' '{' (bitstringPattern (',' bitstringPattern)*)? '}' '#' # binaryPattern
+    | VARIABLE_NAME '=' pattern # aliasPattern
     ;
 
-fun
-    : 'fun' '(' (annotatedVariable (',' annotatedVariable)*)? ')' '->' expression
-    ;
-
-letrec
-    : 'letrec' functionDefinition* 'in' expression
-    ;
-
-application
-    : 'apply' expression '(' (expression (',' expression)*)? ')'
-    ;
-
-interModuleCall
-    : 'call' expression ':' expression '(' (expression (',' expression)*)? ')'
-    ;
-
-primOpCall
-    : 'primop' ATOM '(' (expression (',' expression)*)? ')'
-    ;
-
-try_
-    : 'try' expression 'of' variables '->' expression 'catch' variables '->' expression
-    ;
-
-receive
-    : 'receive' annotatedClause* timeout
-    ;
-
-timeout
-    : 'after' expression '->' expression
-    ;
-
-sequencing
-    : 'do' expression expression
-    ;
-
-catch_
-    : 'catch' expression
+bitstringPattern
+    : '#' '<' pattern '>' '(' (expression (',' expression)*)? ')'
     ;
 
 INTEGER       : SIGN? DIGIT+;
 FLOAT         : SIGN? DIGIT+ '.' DIGIT+ (('E' | 'e') SIGN? DIGIT+)?;
-ATOM          : '\'' (~[\r\n\u0000-\u001f\\'] | ESCAPE)* '\'';
-CHAR          : '$' (~[\r\n\u0000-\u001f \\] | ESCAPE);
-STRING        : '"' (~[\r\n\u0000-\u001f\\"] | ESCAPE)* '"';
+CHAR          : '$' (~[\u0000-\u001f \\] | ESCAPE);
+STRING        : '"' (~'"' | '\\"')* '"';
+ATOM          : '\'' (~'\'' | '\\\'')* '\'';
 VARIABLE_NAME : (UPPERCASE | ('_' NAME_CHAR)) NAME_CHAR*;
 
 fragment SIGN        : '+' | '-';
