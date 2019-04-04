@@ -4,9 +4,13 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import lombok.val;
 import lombok.var;
+import me.yzyzsun.jiro.nodes.ExpressionNode;
+import me.yzyzsun.jiro.nodes.expression.*;
 import me.yzyzsun.jiro.nodes.literal.*;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
+
+import java.util.stream.Collectors;
 
 public class ParseListener extends CoreErlangBaseListener {
     private Source source;
@@ -72,24 +76,71 @@ public class ParseListener extends CoreErlangBaseListener {
     }
 
     @Override
-    public void enterInteger(CoreErlangParser.IntegerContext ctx) {
+    public void exitLiteral(CoreErlangParser.LiteralContext ctx) {
+        values.put(ctx, values.get(ctx.atomicLiteral()));
+    }
+
+    @Override
+    public void exitTuple(CoreErlangParser.TupleContext ctx) {
+        val nodes = ctx.expression().stream().map(x -> (ExpressionNode) values.get(x)).collect(Collectors.toList());
+        values.put(ctx, new TupleNode(nodes));
+    }
+
+    @Override
+    public void exitList(CoreErlangParser.ListContext ctx) {
+        val nodes = ctx.expression().stream().map(x -> (ExpressionNode) values.get(x)).collect(Collectors.toList());
+        values.put(ctx, new ListNode(nodes));
+    }
+
+    @Override
+    public void exitCons(CoreErlangParser.ConsContext ctx) {
+        val nodes = ctx.expression().stream().map(x -> (ExpressionNode) values.get(x)).collect(Collectors.toList());
+        val last = nodes.get(nodes.size() - 1);
+        nodes.remove(nodes.size() - 1);
+        if (last instanceof NilNode) {
+            values.put(ctx, new ListNode(nodes));
+        } else if (last instanceof ListNode) {
+            values.put(ctx, new ListNode(nodes, (ListNode) last));
+        } else {
+            var node = last;
+            for (var i = nodes.size() - 1; i >= 0; --i) {
+                node = new ConsNode(nodes.get(i), node);
+            }
+            values.put(ctx, node);
+        }
+    }
+
+    @Override
+    public void exitBinary(CoreErlangParser.BinaryContext ctx) {
+        val nodes = ctx.bitstring().stream().map(x -> (ExpressionNode) values.get(x)).collect(Collectors.toList());
+        values.put(ctx, new BinaryNode(nodes));
+    }
+
+    @Override
+    public void exitBitstring(CoreErlangParser.BitstringContext ctx) {
+        // Ignore encoding expressions which are implementation-dependent
+        values.put(ctx, values.get(ctx.expression(0)));
+    }
+
+    @Override
+    public void exitInteger(CoreErlangParser.IntegerContext ctx) {
         values.put(ctx, new IntegerNode(Long.parseLong(ctx.INTEGER().getText())));
     }
 
     @Override
-    public void enterFloat(CoreErlangParser.FloatContext ctx) {
+    public void exitFloat(CoreErlangParser.FloatContext ctx) {
         values.put(ctx, new FloatNode(Double.parseDouble(ctx.FLOAT().getText())));
     }
 
     @Override
-    public void enterChar(CoreErlangParser.CharContext ctx) {
+    public void exitChar(CoreErlangParser.CharContext ctx) {
         val str = unescape(ctx.CHAR().getText().substring(1));
         if (str == null) throwInvalidEscapeSequenceError(ctx.getStart());
         values.put(ctx, new IntegerNode(str.codePointAt(0)));
     }
 
     @Override
-    public void enterString(CoreErlangParser.StringContext ctx) {
+    public void exitString(CoreErlangParser.StringContext ctx) {
         val text = ctx.STRING().getText();
         val str = unescape(text.substring(1, text.length() - 1));
         if (str == null) throwInvalidEscapeSequenceError(ctx.getStart());
@@ -97,7 +148,7 @@ public class ParseListener extends CoreErlangBaseListener {
     }
 
     @Override
-    public void enterAtom(CoreErlangParser.AtomContext ctx) {
+    public void exitAtom(CoreErlangParser.AtomContext ctx) {
         val text = ctx.ATOM().getText();
         val str = unescape(text.substring(1, text.length() - 1));
         if (str == null) throwInvalidEscapeSequenceError(ctx.getStart());
@@ -107,7 +158,7 @@ public class ParseListener extends CoreErlangBaseListener {
     }
 
     @Override
-    public void enterNil(CoreErlangParser.NilContext ctx) {
+    public void exitNil(CoreErlangParser.NilContext ctx) {
         values.put(ctx, new NilNode());
     }
 }
