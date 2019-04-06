@@ -1,5 +1,6 @@
 package me.yzyzsun.jiro.parser;
 
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import lombok.val;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 
 public class ParseListener extends CoreErlangBaseListener {
     private Source source;
+    private FrameDescriptor frameDescriptor;
     private ParseTreeProperty<Node> values = new ParseTreeProperty<>();
 
     private static boolean isOctal(char ch) {
@@ -73,6 +75,23 @@ public class ParseListener extends CoreErlangBaseListener {
 
     private void throwInvalidEscapeSequenceError(Token token) {
         throwParseError(token, "invalid escape sequence at: " + token.getText());
+    }
+
+    @Override
+    public void exitExpression(CoreErlangParser.ExpressionContext ctx) {
+        if (ctx.singleExpression().size() == 1) {
+            values.put(ctx, values.get(ctx.singleExpression(0)));
+        } else {
+            val nodes = ctx.singleExpression().stream().map(x -> (ExpressionNode) values.get(x)).collect(Collectors.toList());
+            values.put(ctx, new SequenceNode(nodes));
+        }
+    }
+
+    @Override
+    public void exitVariable(CoreErlangParser.VariableContext ctx) {
+        val slot = frameDescriptor.findFrameSlot(ctx.VARIABLE_NAME().getText());
+        if (slot == null) throwParseError(ctx.getStart(), "unbound variable: " + ctx.getText());
+        values.put(ctx, VariableNodeGen.create(slot));
     }
 
     @Override
