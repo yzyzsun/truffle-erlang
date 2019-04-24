@@ -12,7 +12,7 @@ repositories {
     jcenter()
 }
 
-def graalvmVersion = '1.0.0-rc14'
+def graalvmVersion = '1.0.0-rc16'
 
 dependencies {
     antlr 'org.antlr:antlr4:4.7.2'
