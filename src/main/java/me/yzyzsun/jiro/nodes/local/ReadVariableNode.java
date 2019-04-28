@@ -1,4 +1,4 @@
-package me.yzyzsun.jiro.nodes.expression;
+package me.yzyzsun.jiro.nodes.local;
 
 import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -9,8 +9,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import me.yzyzsun.jiro.nodes.ExpressionNode;
 
 @NodeField(name = "slot", type = FrameSlot.class)
-public abstract class VariableNode extends ExpressionNode {
-    public abstract FrameSlot getSlot();
+public abstract class ReadVariableNode extends ExpressionNode {
+    protected abstract FrameSlot getSlot();
 
     @Specialization(guards = "isLong(frame)")
     protected long readLong(VirtualFrame frame) {

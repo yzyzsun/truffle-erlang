@@ -8,6 +8,7 @@ import lombok.var;
 import me.yzyzsun.jiro.nodes.ExpressionNode;
 import me.yzyzsun.jiro.nodes.expression.*;
 import me.yzyzsun.jiro.nodes.literal.*;
+import me.yzyzsun.jiro.nodes.local.ReadVariableNodeGen;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 
@@ -89,7 +90,7 @@ public class ParseListener extends CoreErlangBaseListener {
     public void exitVariable(CoreErlangParser.VariableContext ctx) {
         val slot = frameDescriptor.findFrameSlot(ctx.VARIABLE_NAME().getText());
         if (slot == null) throwParseError(ctx.getStart(), "unbound variable: " + ctx.getText());
-        values.put(ctx, VariableNodeGen.create(slot));
+        values.put(ctx, ReadVariableNodeGen.create(slot));
     }
 
     @Override
