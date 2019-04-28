@@ -6,20 +6,18 @@ import lombok.var;
 import me.yzyzsun.jiro.nodes.ExpressionNode;
 import me.yzyzsun.jiro.runtime.JiroBinary;
 
-import java.util.List;
-
 public class BinaryNode extends ExpressionNode {
-    private final List<ExpressionNode> nodes;
+    @Children private final ExpressionNode[] nodes;
 
-    public BinaryNode(List<ExpressionNode> nodes) {
+    public BinaryNode(ExpressionNode[] nodes) {
         this.nodes = nodes;
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        val bytes = new byte[nodes.size()];
+        val bytes = new byte[nodes.length];
         for (var i = 0; i < bytes.length; ++i) {
-            bytes[i] = ((Number) nodes.get(i).executeGeneric(frame)).byteValue();
+            bytes[i] = ((Number) nodes[i].executeGeneric(frame)).byteValue();
         }
         return new JiroBinary(bytes);
     }

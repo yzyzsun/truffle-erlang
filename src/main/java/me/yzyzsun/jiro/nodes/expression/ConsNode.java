@@ -5,7 +5,7 @@ import me.yzyzsun.jiro.nodes.ExpressionNode;
 import me.yzyzsun.jiro.runtime.JiroCons;
 
 public class ConsNode extends ExpressionNode {
-    private ExpressionNode car, cdr;
+    @Child private ExpressionNode car, cdr;
 
     public ConsNode(ExpressionNode car, ExpressionNode cdr) {
         this.car = car;

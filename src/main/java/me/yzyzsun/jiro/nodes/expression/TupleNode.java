@@ -4,18 +4,18 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import me.yzyzsun.jiro.nodes.ExpressionNode;
 import me.yzyzsun.jiro.runtime.JiroTuple;
 
-import java.util.List;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class TupleNode extends ExpressionNode {
-    private final List<ExpressionNode> nodes;
+    @Children private final ExpressionNode[] nodes;
 
-    public TupleNode(List<ExpressionNode> nodes) {
+    public TupleNode(ExpressionNode[] nodes) {
         this.nodes = nodes;
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return new JiroTuple(nodes.stream().map(x -> x.executeGeneric(frame)).collect(Collectors.toList()));
+        return new JiroTuple(Arrays.stream(nodes).map(x -> x.executeGeneric(frame)).collect(Collectors.toList()));
     }
 }

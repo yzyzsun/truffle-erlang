@@ -3,25 +3,24 @@ package me.yzyzsun.jiro.nodes.expression;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import me.yzyzsun.jiro.nodes.ExpressionNode;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class ListNode extends ExpressionNode {
-    private final List<ExpressionNode> nodes;
+    @Children private final ExpressionNode[] nodes;
 
-    public ListNode(List<ExpressionNode> nodes) {
+    public ListNode(ExpressionNode[] nodes) {
         this.nodes = nodes;
     }
 
-    public ListNode(List<ExpressionNode> car, ListNode cdr) {
-        this.nodes = new ArrayList<>();
-        this.nodes.addAll(car);
-        this.nodes.addAll(cdr.nodes);
+    public ListNode(ExpressionNode[] car, ListNode cdr) {
+        nodes = new ExpressionNode[car.length + cdr.nodes.length];
+        System.arraycopy(car, 0, nodes, 0, car.length);
+        System.arraycopy(cdr.nodes, 0, nodes, car.length, cdr.nodes.length);
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return nodes.stream().map(x -> x.executeGeneric(frame)).collect(Collectors.toList());
+        return Arrays.stream(nodes).map(x -> x.executeGeneric(frame)).collect(Collectors.toList());
     }
 }

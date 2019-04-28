@@ -11,8 +11,6 @@ import me.yzyzsun.jiro.nodes.literal.*;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 
-import java.util.stream.Collectors;
-
 public class ParseListener extends CoreErlangBaseListener {
     private Source source;
     private FrameDescriptor frameDescriptor;
@@ -82,7 +80,7 @@ public class ParseListener extends CoreErlangBaseListener {
         if (ctx.singleExpression().size() == 1) {
             values.put(ctx, values.get(ctx.singleExpression(0)));
         } else {
-            val nodes = ctx.singleExpression().stream().map(x -> (ExpressionNode) values.get(x)).collect(Collectors.toList());
+            val nodes = ctx.singleExpression().stream().map(x -> values.get(x)).toArray(ExpressionNode[]::new);
             values.put(ctx, new SequenceNode(nodes));
         }
     }
@@ -101,29 +99,29 @@ public class ParseListener extends CoreErlangBaseListener {
 
     @Override
     public void exitTuple(CoreErlangParser.TupleContext ctx) {
-        val nodes = ctx.expression().stream().map(x -> (ExpressionNode) values.get(x)).collect(Collectors.toList());
+        val nodes = ctx.expression().stream().map(x -> values.get(x)).toArray(ExpressionNode[]::new);
         values.put(ctx, new TupleNode(nodes));
     }
 
     @Override
     public void exitList(CoreErlangParser.ListContext ctx) {
-        val nodes = ctx.expression().stream().map(x -> (ExpressionNode) values.get(x)).collect(Collectors.toList());
+        val nodes = ctx.expression().stream().map(x -> values.get(x)).toArray(ExpressionNode[]::new);
         values.put(ctx, new ListNode(nodes));
     }
 
     @Override
     public void exitCons(CoreErlangParser.ConsContext ctx) {
-        val nodes = ctx.expression().stream().map(x -> (ExpressionNode) values.get(x)).collect(Collectors.toList());
-        val last = nodes.get(nodes.size() - 1);
-        nodes.remove(nodes.size() - 1);
+        val exps = ctx.expression();
+        val front = exps.stream().limit(exps.size() - 1).map(x -> values.get(x)).toArray(ExpressionNode[]::new);
+        val last = (ExpressionNode) values.get(exps.get(exps.size() - 1));
         if (last instanceof NilNode) {
-            values.put(ctx, new ListNode(nodes));
+            values.put(ctx, new ListNode(front));
         } else if (last instanceof ListNode) {
-            values.put(ctx, new ListNode(nodes, (ListNode) last));
+            values.put(ctx, new ListNode(front, (ListNode) last));
         } else {
             var node = last;
-            for (var i = nodes.size() - 1; i >= 0; --i) {
-                node = new ConsNode(nodes.get(i), node);
+            for (var i = front.length - 1; i >= 0; --i) {
+                node = new ConsNode(front[i], node);
             }
             values.put(ctx, node);
         }
@@ -131,7 +129,7 @@ public class ParseListener extends CoreErlangBaseListener {
 
     @Override
     public void exitBinary(CoreErlangParser.BinaryContext ctx) {
-        val nodes = ctx.bitstring().stream().map(x -> (ExpressionNode) values.get(x)).collect(Collectors.toList());
+        val nodes = ctx.bitstring().stream().map(x -> values.get(x)).toArray(ExpressionNode[]::new);
         values.put(ctx, new BinaryNode(nodes));
     }
 
