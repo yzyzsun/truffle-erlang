@@ -8,6 +8,8 @@ import lombok.var;
 import me.yzyzsun.jiro.nodes.ExpressionNode;
 import me.yzyzsun.jiro.nodes.expression.*;
 import me.yzyzsun.jiro.nodes.literal.*;
+import me.yzyzsun.jiro.nodes.local.BindVariableNode;
+import me.yzyzsun.jiro.nodes.local.BindVariableNodeGen;
 import me.yzyzsun.jiro.nodes.local.ReadVariableNodeGen;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
@@ -138,6 +140,38 @@ public class ParseListener extends CoreErlangBaseListener {
     public void exitBitstring(CoreErlangParser.BitstringContext ctx) {
         // Ignore encoding expressions which are implementation-dependent
         values.put(ctx, values.get(ctx.expression(0)));
+    }
+
+    @Override
+    public void exitLet(CoreErlangParser.LetContext ctx) {
+        val variables = (VariablesNode) values.get(ctx.variables());
+        val binding = (ExpressionNode) values.get(ctx.expression(0));
+        val expr = (ExpressionNode) values.get(ctx.expression(1));
+        if (binding instanceof SequenceNode) {
+            val sequence = (SequenceNode) binding;
+            if (variables.length != sequence.length) throwParseError(ctx.start, "the number of variables is "
+                    + variables.length + ", but the degree of the binding sequence is " + sequence.length);
+            val bindNodes = new BindVariableNode[sequence.length];
+            for (var i = 0; i < sequence.length; ++i) {
+                bindNodes[i] = BindVariableNodeGen.create(sequence.get(i), variables.get(i));
+            }
+            values.put(ctx, new LetNode(bindNodes, expr));
+        } else {
+            if (variables.length != 1) throwParseError(ctx.start, "a single expression cannot be bound to "
+                    + variables.length + " variables");
+            val bindNode = new BindVariableNode[1];
+            bindNode[0] = BindVariableNodeGen.create(binding, variables.get(0));
+            values.put(ctx, new LetNode(bindNode, expr));
+        }
+    }
+
+    @Override
+    public void exitVariables(CoreErlangParser.VariablesContext ctx) {
+        val node = new VariablesNode(ctx.VARIABLE_NAME().size());
+        for (val variable : ctx.VARIABLE_NAME()) {
+            node.add(frameDescriptor.addFrameSlot(variable.getText()));
+        }
+        values.put(ctx, node);
     }
 
     @Override
