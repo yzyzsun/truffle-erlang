@@ -5,6 +5,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import lombok.val;
 import lombok.var;
+import me.yzyzsun.jiro.Jiro;
 import me.yzyzsun.jiro.nodes.ExpressionNode;
 import me.yzyzsun.jiro.nodes.expression.*;
 import me.yzyzsun.jiro.nodes.literal.*;
@@ -14,8 +15,14 @@ import me.yzyzsun.jiro.nodes.local.ReadVariableNodeGen;
 import org.antlr.v4.runtime.Token;
 
 public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
-    private Source source;
+    private final Jiro language;
+    private final Source source;
     private FrameDescriptor frameDescriptor;
+
+    public JiroVisitor(Jiro language, Source source) {
+        this.language = language;
+        this.source = source;
+    }
 
     private static boolean isOctal(char ch) {
         return '0' <= ch && ch <= '7';

@@ -1,6 +1,6 @@
 package me.yzyzsun.jiro.runtime;
 
-public class JiroNil {
+public class JiroNil extends JiroObject {
     public static final JiroNil SINGLETON = new JiroNil();
     private JiroNil() {}
 

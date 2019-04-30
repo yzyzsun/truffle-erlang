@@ -3,7 +3,7 @@ package me.yzyzsun.jiro.runtime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class JiroTuple {
+public class JiroTuple extends JiroObject {
     private final List<Object> values;
 
     public JiroTuple(List<Object> values) {

@@ -1,6 +1,6 @@
 package me.yzyzsun.jiro.runtime;
 
-public class JiroCons {
+public class JiroCons extends JiroObject {
     private final Object car, cdr;
 
     public JiroCons(Object car, Object cdr) {

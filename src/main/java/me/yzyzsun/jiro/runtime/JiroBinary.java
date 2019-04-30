@@ -3,7 +3,7 @@ package me.yzyzsun.jiro.runtime;
 import lombok.val;
 import lombok.var;
 
-public class JiroBinary {
+public class JiroBinary extends JiroObject {
     private final byte[] value;
 
     public JiroBinary(byte[] value) {
