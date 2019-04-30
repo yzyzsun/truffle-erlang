@@ -12,12 +12,10 @@ import me.yzyzsun.jiro.nodes.local.BindVariableNode;
 import me.yzyzsun.jiro.nodes.local.BindVariableNodeGen;
 import me.yzyzsun.jiro.nodes.local.ReadVariableNodeGen;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.tree.ParseTreeProperty;
 
-public class ParseListener extends CoreErlangBaseListener {
+public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
     private Source source;
     private FrameDescriptor frameDescriptor;
-    private ParseTreeProperty<Node> values = new ParseTreeProperty<>();
 
     private static boolean isOctal(char ch) {
         return '0' <= ch && ch <= '7';
@@ -79,74 +77,74 @@ public class ParseListener extends CoreErlangBaseListener {
     }
 
     @Override
-    public void exitExpression(CoreErlangParser.ExpressionContext ctx) {
+    public Node visitExpression(CoreErlangParser.ExpressionContext ctx) {
         if (ctx.singleExpression().size() == 1) {
-            values.put(ctx, values.get(ctx.singleExpression(0)));
+            return this.visit(ctx.singleExpression(0));
         } else {
-            val nodes = ctx.singleExpression().stream().map(x -> values.get(x)).toArray(ExpressionNode[]::new);
-            values.put(ctx, new SequenceNode(nodes));
+            val nodes = ctx.singleExpression().stream().map(this::visit).toArray(ExpressionNode[]::new);
+            return new SequenceNode(nodes);
         }
     }
 
     @Override
-    public void exitVariable(CoreErlangParser.VariableContext ctx) {
+    public Node visitVariable(CoreErlangParser.VariableContext ctx) {
         val slot = frameDescriptor.findFrameSlot(ctx.VARIABLE_NAME().getText());
         if (slot == null) throwParseError(ctx.getStart(), "unbound variable: " + ctx.getText());
-        values.put(ctx, ReadVariableNodeGen.create(slot));
+        return ReadVariableNodeGen.create(slot);
     }
 
     @Override
-    public void exitLiteral(CoreErlangParser.LiteralContext ctx) {
-        values.put(ctx, values.get(ctx.atomicLiteral()));
+    public Node visitLiteral(CoreErlangParser.LiteralContext ctx) {
+        return this.visit(ctx.atomicLiteral());
     }
 
     @Override
-    public void exitTuple(CoreErlangParser.TupleContext ctx) {
-        val nodes = ctx.expression().stream().map(x -> values.get(x)).toArray(ExpressionNode[]::new);
-        values.put(ctx, new TupleNode(nodes));
+    public Node visitTuple(CoreErlangParser.TupleContext ctx) {
+        val nodes = ctx.expression().stream().map(this::visit).toArray(ExpressionNode[]::new);
+        return new TupleNode(nodes);
     }
 
     @Override
-    public void exitList(CoreErlangParser.ListContext ctx) {
-        val nodes = ctx.expression().stream().map(x -> values.get(x)).toArray(ExpressionNode[]::new);
-        values.put(ctx, new ListNode(nodes));
+    public Node visitList(CoreErlangParser.ListContext ctx) {
+        val nodes = ctx.expression().stream().map(this::visit).toArray(ExpressionNode[]::new);
+        return new ListNode(nodes);
     }
 
     @Override
-    public void exitCons(CoreErlangParser.ConsContext ctx) {
+    public Node visitCons(CoreErlangParser.ConsContext ctx) {
         val exps = ctx.expression();
-        val front = exps.stream().limit(exps.size() - 1).map(x -> values.get(x)).toArray(ExpressionNode[]::new);
-        val last = (ExpressionNode) values.get(exps.get(exps.size() - 1));
+        val front = exps.stream().limit(exps.size() - 1).map(this::visit).toArray(ExpressionNode[]::new);
+        val last = (ExpressionNode) this.visit(exps.get(exps.size() - 1));
         if (last instanceof NilNode) {
-            values.put(ctx, new ListNode(front));
+            return new ListNode(front);
         } else if (last instanceof ListNode) {
-            values.put(ctx, new ListNode(front, (ListNode) last));
+            return new ListNode(front, (ListNode) last);
         } else {
             var node = last;
             for (var i = front.length - 1; i >= 0; --i) {
                 node = new ConsNode(front[i], node);
             }
-            values.put(ctx, node);
+            return node;
         }
     }
 
     @Override
-    public void exitBinary(CoreErlangParser.BinaryContext ctx) {
-        val nodes = ctx.bitstring().stream().map(x -> values.get(x)).toArray(ExpressionNode[]::new);
-        values.put(ctx, new BinaryNode(nodes));
+    public Node visitBinary(CoreErlangParser.BinaryContext ctx) {
+        val nodes = ctx.bitstring().stream().map(this::visit).toArray(ExpressionNode[]::new);
+        return new BinaryNode(nodes);
     }
 
     @Override
-    public void exitBitstring(CoreErlangParser.BitstringContext ctx) {
+    public Node visitBitstring(CoreErlangParser.BitstringContext ctx) {
         // Ignore encoding expressions which are implementation-dependent
-        values.put(ctx, values.get(ctx.expression(0)));
+        return this.visit(ctx.expression(0));
     }
 
     @Override
-    public void exitLet(CoreErlangParser.LetContext ctx) {
-        val variables = (VariablesNode) values.get(ctx.variables());
-        val binding = (ExpressionNode) values.get(ctx.expression(0));
-        val expr = (ExpressionNode) values.get(ctx.expression(1));
+    public Node visitLet(CoreErlangParser.LetContext ctx) {
+        val variables = (VariablesNode) this.visit(ctx.variables());
+        val binding = (ExpressionNode) this.visit(ctx.expression(0));
+        val expr = (ExpressionNode) this.visit(ctx.expression(1));
         if (binding instanceof SequenceNode) {
             val sequence = (SequenceNode) binding;
             if (variables.length != sequence.length) throwParseError(ctx.start, "the number of variables is "
@@ -155,62 +153,62 @@ public class ParseListener extends CoreErlangBaseListener {
             for (var i = 0; i < sequence.length; ++i) {
                 bindNodes[i] = BindVariableNodeGen.create(sequence.get(i), variables.get(i));
             }
-            values.put(ctx, new LetNode(bindNodes, expr));
+            return new LetNode(bindNodes, expr);
         } else {
             if (variables.length != 1) throwParseError(ctx.start, "a single expression cannot be bound to "
                     + variables.length + " variables");
             val bindNode = new BindVariableNode[1];
             bindNode[0] = BindVariableNodeGen.create(binding, variables.get(0));
-            values.put(ctx, new LetNode(bindNode, expr));
+            return new LetNode(bindNode, expr);
         }
     }
 
     @Override
-    public void exitVariables(CoreErlangParser.VariablesContext ctx) {
+    public Node visitVariables(CoreErlangParser.VariablesContext ctx) {
         val node = new VariablesNode(ctx.VARIABLE_NAME().size());
         for (val variable : ctx.VARIABLE_NAME()) {
             node.add(frameDescriptor.addFrameSlot(variable.getText()));
         }
-        values.put(ctx, node);
+        return node;
     }
 
     @Override
-    public void exitInteger(CoreErlangParser.IntegerContext ctx) {
-        values.put(ctx, new IntegerNode(Long.parseLong(ctx.INTEGER().getText())));
+    public Node visitInteger(CoreErlangParser.IntegerContext ctx) {
+        return new IntegerNode(Long.parseLong(ctx.INTEGER().getText()));
     }
 
     @Override
-    public void exitFloat(CoreErlangParser.FloatContext ctx) {
-        values.put(ctx, new FloatNode(Double.parseDouble(ctx.FLOAT().getText())));
+    public Node visitFloat(CoreErlangParser.FloatContext ctx) {
+        return new FloatNode(Double.parseDouble(ctx.FLOAT().getText()));
     }
 
     @Override
-    public void exitChar(CoreErlangParser.CharContext ctx) {
+    public Node visitChar(CoreErlangParser.CharContext ctx) {
         val str = unescape(ctx.CHAR().getText().substring(1));
         if (str == null) throwInvalidEscapeSequenceError(ctx.getStart());
-        values.put(ctx, new IntegerNode(str.codePointAt(0)));
+        return new IntegerNode(str.codePointAt(0));
     }
 
     @Override
-    public void exitString(CoreErlangParser.StringContext ctx) {
+    public Node visitString(CoreErlangParser.StringContext ctx) {
         val text = ctx.STRING().getText();
         val str = unescape(text.substring(1, text.length() - 1));
         if (str == null) throwInvalidEscapeSequenceError(ctx.getStart());
-        values.put(ctx, new StringNode(str));
+        return new StringNode(str);
     }
 
     @Override
-    public void exitAtom(CoreErlangParser.AtomContext ctx) {
+    public Node visitAtom(CoreErlangParser.AtomContext ctx) {
         val text = ctx.ATOM().getText();
         val str = unescape(text.substring(1, text.length() - 1));
         if (str == null) throwInvalidEscapeSequenceError(ctx.getStart());
-        else if (str.equals("true")) values.put(ctx, new BooleanNode(true));
-        else if (str.equals("false")) values.put(ctx, new BooleanNode(false));
-        else values.put(ctx, new AtomNode(str));
+        else if (str.equals("true")) return new BooleanNode(true);
+        else if (str.equals("false")) return new BooleanNode(false);
+        return new AtomNode(str);
     }
 
     @Override
-    public void exitNil(CoreErlangParser.NilContext ctx) {
-        values.put(ctx, new NilNode());
+    public Node visitNil(CoreErlangParser.NilContext ctx) {
+        return new NilNode();
     }
 }

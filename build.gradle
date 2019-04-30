@@ -23,7 +23,7 @@ dependencies {
 }
 
 generateGrammarSource {
-    arguments += ['-package', 'me.yzyzsun.jiro.parser']
+    arguments += ['-visitor', '-no-listener', '-package', 'me.yzyzsun.jiro.parser']
 }
 
 mainClassName = 'me.yzyzsun.jiro.App'
