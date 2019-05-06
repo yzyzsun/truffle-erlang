@@ -1,38 +1,34 @@
 package me.yzyzsun.jiro.runtime;
 
 import com.oracle.truffle.api.RootCallTarget;
+import lombok.Getter;
 import lombok.val;
-import lombok.var;
 import me.yzyzsun.jiro.Jiro;
 
 import java.util.*;
 
-public class JiroFunctionRegistry {
+public class JiroModule extends JiroObject {
     private final Jiro language;
+    @Getter private final String name;
+    private final Set<JiroFunctionName> exports;
     private final Map<JiroFunctionName, JiroFunction> functions = new HashMap<>();
 
-    public JiroFunctionRegistry(Jiro language) {
+    public JiroModule(Jiro language, String name, Set<JiroFunctionName> exports) {
         this.language = language;
+        this.name = name;
+        this.exports = exports;
     }
 
-    public JiroFunction lookup(JiroFunctionName functionName, boolean createIfAbsent) {
-        var result = functions.get(functionName);
-        if (result == null && createIfAbsent) {
-            result = new JiroFunction(language, functionName);
-            functions.put(functionName, result);
-        }
-        return result;
-    }
-
-    public JiroFunction register(JiroFunctionName functionName, RootCallTarget callTarget) {
-        val function = lookup(functionName, true);
+    public JiroFunction registerFunction(JiroFunctionName functionName, RootCallTarget callTarget) {
+        val function = new JiroFunction(language, functionName);
+        functions.put(functionName, function);
         function.setCallTarget(callTarget);
         return function;
     }
 
-    public void register(Map<JiroFunctionName, RootCallTarget> newFunctions) {
+    public void registerFunctions(Map<JiroFunctionName, RootCallTarget> newFunctions) {
         for (val entry : newFunctions.entrySet()) {
-            register(entry.getKey(), entry.getValue());
+            registerFunction(entry.getKey(), entry.getValue());
         }
     }
 

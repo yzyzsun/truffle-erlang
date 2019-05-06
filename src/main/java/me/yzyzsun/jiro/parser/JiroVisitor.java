@@ -17,6 +17,7 @@ import org.antlr.v4.runtime.Token;
 public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
     private final Jiro language;
     private final Source source;
+    private String currentModule;
     private FrameDescriptor frameDescriptor;
 
     public JiroVisitor(Jiro language, Source source) {
@@ -84,6 +85,14 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
     }
 
     @Override
+    public Node visitFunctionName(CoreErlangParser.FunctionNameContext ctx) {
+        val text = ctx.ATOM().getText();
+        val identifier = unescape(text.substring(1, text.length() - 1));
+        val arity = Integer.parseInt(ctx.INTEGER().getText());
+        return new FunctionNameNode(language, currentModule, identifier, arity);
+    }
+
+    @Override
     public Node visitExpression(CoreErlangParser.ExpressionContext ctx) {
         if (ctx.singleExpression().size() == 1) {
             return this.visit(ctx.singleExpression(0));
@@ -103,6 +112,11 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
     @Override
     public Node visitLiteral(CoreErlangParser.LiteralContext ctx) {
         return this.visit(ctx.atomicLiteral());
+    }
+
+    @Override
+    public Node visitFname(CoreErlangParser.FnameContext ctx) {
+        return this.visit(ctx.functionName());
     }
 
     @Override
