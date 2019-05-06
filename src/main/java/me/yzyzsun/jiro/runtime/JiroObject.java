@@ -1,4 +1,5 @@
 package me.yzyzsun.jiro.runtime;
 
-public class JiroObject {
-}
+import com.oracle.truffle.api.interop.TruffleObject;
+
+public class JiroObject implements TruffleObject {}

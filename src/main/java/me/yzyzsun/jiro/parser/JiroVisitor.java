@@ -185,6 +185,28 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
     }
 
     @Override
+    public Node visitApplication(CoreErlangParser.ApplicationContext ctx) {
+        val function = (ExpressionNode) this.visit(ctx.expression(0));
+        val arguments = ctx.expression().stream().skip(1).map(this::visit).toArray(ExpressionNode[]::new);
+        return new InvokeNode(function, arguments);
+    }
+
+    @Override
+    public Node visitInterModuleCall(CoreErlangParser.InterModuleCallContext ctx) {
+        val moduleAtom = this.visit(ctx.expression(0));
+        val functionAtom = this.visit(ctx.expression(1));
+        if (!(moduleAtom instanceof AtomNode && functionAtom instanceof AtomNode)) {
+            throwParseError(ctx.start, "m and f in 'call m:f(...)' should both evaluate to atoms");
+        }
+        // TODO: `executeGeneric` can be replaced by `executeString`
+        val moduleName = (String) ((AtomNode) moduleAtom).executeGeneric(null);
+        val identifier = (String) ((AtomNode) functionAtom).executeGeneric(null);
+        val functionName = new FunctionNameNode(language, moduleName, identifier, ctx.expression().size() - 2);
+        val arguments = ctx.expression().stream().skip(2).map(this::visit).toArray(ExpressionNode[]::new);
+        return new InvokeNode(functionName, arguments);
+    }
+
+    @Override
     public Node visitVariables(CoreErlangParser.VariablesContext ctx) {
         val node = new VariablesNode(ctx.VARIABLE_NAME().size());
         for (val variable : ctx.VARIABLE_NAME()) {
