@@ -4,14 +4,15 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import lombok.Getter;
 import lombok.val;
 import me.yzyzsun.jiro.Jiro;
 import me.yzyzsun.jiro.nodes.ExpressionNode;
 import me.yzyzsun.jiro.runtime.*;
 
 public class FunctionNameNode extends ExpressionNode {
-    private final String moduleName;
-    private final JiroFunctionName functionName;
+    @Getter private final String moduleName;
+    @Getter private final JiroFunctionName functionName;
     private final ContextReference<JiroContext> reference;
     @CompilationFinal private JiroFunction cachedFunction;
 

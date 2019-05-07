@@ -6,7 +6,8 @@ import me.yzyzsun.jiro.runtime.JiroException;
 
 public class UndefinedRootNode extends JiroRootNode {
     public UndefinedRootNode(Jiro language, String name) {
-        super(language, null, null, null, name);
+        super(language, null, null, null);
+        setName(name);
     }
 
     @Override

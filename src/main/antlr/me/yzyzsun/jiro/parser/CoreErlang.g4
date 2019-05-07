@@ -5,15 +5,7 @@
 grammar CoreErlang;
 
 module
-    : 'module' ATOM exports attributes functionDefinition* 'end'
-    ;
-
-exports
-    : '[' (functionName (',' functionName)*)? ']'
-    ;
-
-functionName
-    : ATOM '/' INTEGER
+    : 'module' ATOM '[' (functionName (',' functionName)*)? ']' attributes functionDefinition* 'end'
     ;
 
 attributes
@@ -22,10 +14,6 @@ attributes
 
 moduleAttribute
     : ATOM '=' constant
-    ;
-
-functionDefinition
-    : functionName '=' fun
     ;
 
 constant
@@ -42,6 +30,14 @@ atomicLiteral
     | STRING  # string
     | ATOM    # atom
     | '[' ']' # nil
+    ;
+
+functionDefinition
+    : functionName '=' fun
+    ;
+
+functionName
+    : ATOM '/' INTEGER
     ;
 
 fun

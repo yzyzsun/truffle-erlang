@@ -1,5 +1,6 @@
 package me.yzyzsun.jiro.parser;
 
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
@@ -7,17 +8,23 @@ import lombok.val;
 import lombok.var;
 import me.yzyzsun.jiro.Jiro;
 import me.yzyzsun.jiro.nodes.ExpressionNode;
+import me.yzyzsun.jiro.nodes.JiroRootNode;
 import me.yzyzsun.jiro.nodes.expression.*;
 import me.yzyzsun.jiro.nodes.literal.*;
 import me.yzyzsun.jiro.nodes.local.BindVariableNode;
 import me.yzyzsun.jiro.nodes.local.BindVariableNodeGen;
+import me.yzyzsun.jiro.nodes.local.ReadArgumentNode;
 import me.yzyzsun.jiro.nodes.local.ReadVariableNodeGen;
+import me.yzyzsun.jiro.runtime.JiroFunctionName;
+import me.yzyzsun.jiro.runtime.JiroModule;
 import org.antlr.v4.runtime.Token;
+
+import java.util.HashSet;
 
 public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
     private final Jiro language;
     private final Source source;
-    private String currentModule;
+    private JiroModule currentModule;
     private FrameDescriptor frameDescriptor;
 
     public JiroVisitor(Jiro language, Source source) {
@@ -85,11 +92,87 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
     }
 
     @Override
+    public Node visitModule(CoreErlangParser.ModuleContext ctx) {
+        val exports = new HashSet<JiroFunctionName>();
+        for (val context : ctx.functionName()) {
+            val functionName = ((FunctionNameNode) this.visit(context)).getFunctionName();
+            exports.add(functionName);
+        }
+        currentModule = new JiroModule(language, ctx.ATOM().getText(), exports);
+        return null;
+    }
+
+    @Override
+    public Node visitInteger(CoreErlangParser.IntegerContext ctx) {
+        return new IntegerNode(Long.parseLong(ctx.INTEGER().getText()));
+    }
+
+    @Override
+    public Node visitFloat(CoreErlangParser.FloatContext ctx) {
+        return new FloatNode(Double.parseDouble(ctx.FLOAT().getText()));
+    }
+
+    @Override
+    public Node visitChar(CoreErlangParser.CharContext ctx) {
+        val str = unescape(ctx.CHAR().getText().substring(1));
+        if (str == null) throwInvalidEscapeSequenceError(ctx.getStart());
+        return new IntegerNode(str.codePointAt(0));
+    }
+
+    @Override
+    public Node visitString(CoreErlangParser.StringContext ctx) {
+        val text = ctx.STRING().getText();
+        val str = unescape(text.substring(1, text.length() - 1));
+        if (str == null) throwInvalidEscapeSequenceError(ctx.getStart());
+        return new StringNode(str);
+    }
+
+    @Override
+    public Node visitAtom(CoreErlangParser.AtomContext ctx) {
+        val text = ctx.ATOM().getText();
+        val str = unescape(text.substring(1, text.length() - 1));
+        if (str == null) throwInvalidEscapeSequenceError(ctx.getStart());
+        else if (str.equals("true")) return new BooleanNode(true);
+        else if (str.equals("false")) return new BooleanNode(false);
+        return new AtomNode(str);
+    }
+
+    @Override
+    public Node visitNil(CoreErlangParser.NilContext ctx) {
+        return new NilNode();
+    }
+
+    @Override
+    public Node visitFunctionDefinition(CoreErlangParser.FunctionDefinitionContext ctx) {
+        frameDescriptor = new FrameDescriptor();
+        val functionName = ((FunctionNameNode) this.visit(ctx.functionName())).getFunctionName();
+        val root = (JiroRootNode) this.visit(ctx.fun());
+        root.setName(functionName.toString());
+        currentModule.registerFunction(functionName, Truffle.getRuntime().createCallTarget(root));
+        return null;
+    }
+
+    @Override
     public Node visitFunctionName(CoreErlangParser.FunctionNameContext ctx) {
         val text = ctx.ATOM().getText();
         val identifier = unescape(text.substring(1, text.length() - 1));
         val arity = Integer.parseInt(ctx.INTEGER().getText());
-        return new FunctionNameNode(language, currentModule, identifier, arity);
+        return new FunctionNameNode(language, currentModule.getName(), identifier, arity);
+    }
+
+    @Override
+    public Node visitFun(CoreErlangParser.FunContext ctx) {
+        val argc = ctx.VARIABLE_NAME().size();
+        val bindNodes = new BindVariableNode[argc];
+        for (var i = 0; i < argc; ++i) {
+            val slot = frameDescriptor.addFrameSlot(ctx.VARIABLE_NAME(i).getText());
+            val value = new ReadArgumentNode(i);
+            bindNodes[i] = BindVariableNodeGen.create(value, slot);
+        }
+        val node = new LetNode(bindNodes, (ExpressionNode) this.visit(ctx.expression()));
+        val startIndex = ctx.start.getStartIndex();
+        val sourceSection = source.createSection(startIndex, ctx.stop.getStopIndex() - startIndex);
+        return new JiroRootNode(language, frameDescriptor, node, sourceSection);
     }
 
     @Override
@@ -117,6 +200,11 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
     @Override
     public Node visitFname(CoreErlangParser.FnameContext ctx) {
         return this.visit(ctx.functionName());
+    }
+
+    @Override
+    public Node visitF(CoreErlangParser.FContext ctx) {
+        return this.visit(ctx.fun());
     }
 
     @Override
@@ -213,45 +301,5 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
             node.add(frameDescriptor.addFrameSlot(variable.getText()));
         }
         return node;
-    }
-
-    @Override
-    public Node visitInteger(CoreErlangParser.IntegerContext ctx) {
-        return new IntegerNode(Long.parseLong(ctx.INTEGER().getText()));
-    }
-
-    @Override
-    public Node visitFloat(CoreErlangParser.FloatContext ctx) {
-        return new FloatNode(Double.parseDouble(ctx.FLOAT().getText()));
-    }
-
-    @Override
-    public Node visitChar(CoreErlangParser.CharContext ctx) {
-        val str = unescape(ctx.CHAR().getText().substring(1));
-        if (str == null) throwInvalidEscapeSequenceError(ctx.getStart());
-        return new IntegerNode(str.codePointAt(0));
-    }
-
-    @Override
-    public Node visitString(CoreErlangParser.StringContext ctx) {
-        val text = ctx.STRING().getText();
-        val str = unescape(text.substring(1, text.length() - 1));
-        if (str == null) throwInvalidEscapeSequenceError(ctx.getStart());
-        return new StringNode(str);
-    }
-
-    @Override
-    public Node visitAtom(CoreErlangParser.AtomContext ctx) {
-        val text = ctx.ATOM().getText();
-        val str = unescape(text.substring(1, text.length() - 1));
-        if (str == null) throwInvalidEscapeSequenceError(ctx.getStart());
-        else if (str.equals("true")) return new BooleanNode(true);
-        else if (str.equals("false")) return new BooleanNode(false);
-        return new AtomNode(str);
-    }
-
-    @Override
-    public Node visitNil(CoreErlangParser.NilContext ctx) {
-        return new NilNode();
     }
 }
