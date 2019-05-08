@@ -26,4 +26,7 @@ generateGrammarSource {
     arguments += ['-visitor', '-no-listener', '-package', 'me.yzyzsun.jiro.parser']
 }
 
-mainClassName = 'me.yzyzsun.jiro.App'
+application {
+    mainClassName = 'me.yzyzsun.jiro.Launcher'
+    applicationDefaultJvmArgs = ['-Dtruffle.class.path.append=' + sourceSets.main.java.outputDir]
+}

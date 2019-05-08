@@ -9,6 +9,7 @@ import lombok.var;
 import me.yzyzsun.jiro.Jiro;
 import me.yzyzsun.jiro.nodes.ExpressionNode;
 import me.yzyzsun.jiro.nodes.JiroRootNode;
+import me.yzyzsun.jiro.nodes.ModuleNode;
 import me.yzyzsun.jiro.nodes.expression.*;
 import me.yzyzsun.jiro.nodes.literal.*;
 import me.yzyzsun.jiro.nodes.local.BindVariableNode;
@@ -24,6 +25,7 @@ import java.util.HashSet;
 public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
     private final Jiro language;
     private final Source source;
+    private String currentModuleName;
     private JiroModule currentModule;
     private FrameDescriptor frameDescriptor;
 
@@ -93,13 +95,15 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
 
     @Override
     public Node visitModule(CoreErlangParser.ModuleContext ctx) {
+        currentModuleName = ctx.ATOM().getText();
         val exports = new HashSet<JiroFunctionName>();
         for (val context : ctx.functionName()) {
             val functionName = ((FunctionNameNode) this.visit(context)).getFunctionName();
             exports.add(functionName);
         }
-        currentModule = new JiroModule(language, ctx.ATOM().getText(), exports);
-        return null;
+        currentModule = new JiroModule(language, currentModuleName, exports);
+        for (val def : ctx.functionDefinition()) this.visit(def);
+        return new ModuleNode(currentModule);
     }
 
     @Override
@@ -157,7 +161,7 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
         val text = ctx.ATOM().getText();
         val identifier = unescape(text.substring(1, text.length() - 1));
         val arity = Integer.parseInt(ctx.INTEGER().getText());
-        return new FunctionNameNode(language, currentModule.getName(), identifier, arity);
+        return new FunctionNameNode(language, currentModuleName, identifier, arity);
     }
 
     @Override
