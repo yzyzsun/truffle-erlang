@@ -1,4 +1,4 @@
-package me.yzyzsun.jiro.nodes.expression;
+package me.yzyzsun.jiro.nodes;
 
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.nodes.Node;

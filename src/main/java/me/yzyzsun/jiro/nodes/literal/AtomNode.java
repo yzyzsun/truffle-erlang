@@ -1,10 +1,11 @@
 package me.yzyzsun.jiro.nodes.literal;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import lombok.Getter;
 import me.yzyzsun.jiro.nodes.ExpressionNode;
 
 public class AtomNode extends ExpressionNode {
-    private final String value;
+    @Getter private final String value;
 
     public AtomNode(String value) {
         this.value = value;

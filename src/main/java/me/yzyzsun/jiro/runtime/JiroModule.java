@@ -7,7 +7,7 @@ import me.yzyzsun.jiro.Jiro;
 
 import java.util.*;
 
-public class JiroModule extends JiroObject {
+public class JiroModule {
     private final Jiro language;
     @Getter private final String name;
     private final Set<JiroFunctionName> exports = new HashSet<>();
