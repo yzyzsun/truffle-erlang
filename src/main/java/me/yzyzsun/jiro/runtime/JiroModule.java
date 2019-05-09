@@ -10,13 +10,16 @@ import java.util.*;
 public class JiroModule extends JiroObject {
     private final Jiro language;
     @Getter private final String name;
-    private final Set<JiroFunctionName> exports;
+    private final Set<JiroFunctionName> exports = new HashSet<>();
     private final Map<JiroFunctionName, JiroFunction> functions = new HashMap<>();
 
-    public JiroModule(Jiro language, String name, Set<JiroFunctionName> exports) {
+    public JiroModule(Jiro language, String name) {
         this.language = language;
         this.name = name;
-        this.exports = exports;
+    }
+
+    public void export(JiroFunctionName functionName) {
+        exports.add(functionName);
     }
 
     public JiroFunction registerFunction(JiroFunctionName functionName, RootCallTarget callTarget) {
@@ -32,12 +35,14 @@ public class JiroModule extends JiroObject {
         }
     }
 
-    public JiroFunction getFunction(JiroFunctionName functionName) {
+    public JiroFunction getFunction(JiroFunctionName functionName, boolean interModule) {
+        if (interModule && !exports.contains(functionName)) return null;
         return functions.get(functionName);
     }
 
     public List<JiroFunction> getFunctions() {
         val result = new ArrayList<JiroFunction>(functions.values());
+        result.removeIf(x -> !exports.contains(x.getFunctionName()));
         result.sort(Comparator.comparing(JiroFunction::toString));
         return result;
     }

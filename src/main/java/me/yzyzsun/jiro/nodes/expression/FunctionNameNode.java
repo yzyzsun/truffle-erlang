@@ -11,12 +11,14 @@ import me.yzyzsun.jiro.nodes.ExpressionNode;
 import me.yzyzsun.jiro.runtime.*;
 
 public class FunctionNameNode extends ExpressionNode {
+    private final boolean interModule;
     @Getter private final String moduleName;
     @Getter private final JiroFunctionName functionName;
     private final ContextReference<JiroContext> reference;
     @CompilationFinal private JiroFunction cachedFunction;
 
-    public FunctionNameNode(Jiro language, String moduleName, String identifier, int arity) {
+    public FunctionNameNode(Jiro language, String moduleName, String identifier, int arity, boolean interModule) {
+        this.interModule = interModule;
         this.moduleName = moduleName;
         functionName = new JiroFunctionName(identifier, arity);
         reference = language.getContextReference();
@@ -27,8 +29,9 @@ public class FunctionNameNode extends ExpressionNode {
         if (cachedFunction == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             val module = reference.get().getModule(moduleName);
-            cachedFunction = module.getFunction(functionName);
-            if (cachedFunction == null) throw new JiroException("undefined function: " + functionName, this);
+            if (module == null) throw new JiroException("unknown module: " + moduleName, this);
+            cachedFunction = module.getFunction(functionName, interModule);
+            if (cachedFunction == null) throw new JiroException("undefined function: " + moduleName + ":" + functionName, this);
         }
         return cachedFunction;
     }

@@ -16,16 +16,12 @@ import me.yzyzsun.jiro.nodes.local.BindVariableNode;
 import me.yzyzsun.jiro.nodes.local.BindVariableNodeGen;
 import me.yzyzsun.jiro.nodes.local.ReadArgumentNode;
 import me.yzyzsun.jiro.nodes.local.ReadVariableNodeGen;
-import me.yzyzsun.jiro.runtime.JiroFunctionName;
 import me.yzyzsun.jiro.runtime.JiroModule;
 import org.antlr.v4.runtime.Token;
-
-import java.util.HashSet;
 
 public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
     private final Jiro language;
     private final Source source;
-    private String currentModuleName;
     private JiroModule currentModule;
     private FrameDescriptor frameDescriptor;
 
@@ -95,13 +91,13 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
 
     @Override
     public Node visitModule(CoreErlangParser.ModuleContext ctx) {
-        currentModuleName = ctx.ATOM().getText();
-        val exports = new HashSet<JiroFunctionName>();
+        val text = ctx.ATOM().getText();
+        val moduleName = unescape(text.substring(1, text.length() - 1));
+        currentModule = new JiroModule(language, moduleName);
         for (val context : ctx.functionName()) {
             val functionName = ((FunctionNameNode) this.visit(context)).getFunctionName();
-            exports.add(functionName);
+            currentModule.export(functionName);
         }
-        currentModule = new JiroModule(language, currentModuleName, exports);
         for (val def : ctx.functionDefinition()) this.visit(def);
         return new ModuleNode(currentModule);
     }
@@ -161,7 +157,7 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
         val text = ctx.ATOM().getText();
         val identifier = unescape(text.substring(1, text.length() - 1));
         val arity = Integer.parseInt(ctx.INTEGER().getText());
-        return new FunctionNameNode(language, currentModuleName, identifier, arity);
+        return new FunctionNameNode(language, currentModule.getName(), identifier, arity, false);
     }
 
     @Override
@@ -293,7 +289,7 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
         // TODO: `executeGeneric` can be replaced by `executeString`
         val moduleName = (String) ((AtomNode) moduleAtom).executeGeneric(null);
         val identifier = (String) ((AtomNode) functionAtom).executeGeneric(null);
-        val functionName = new FunctionNameNode(language, moduleName, identifier, ctx.expression().size() - 2);
+        val functionName = new FunctionNameNode(language, moduleName, identifier, ctx.expression().size() - 2, true);
         val arguments = ctx.expression().stream().skip(2).map(this::visit).toArray(ExpressionNode[]::new);
         return new InvokeNode(functionName, arguments);
     }
