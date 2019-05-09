@@ -21,7 +21,8 @@ public class Launcher {
             source = Source.newBuilder(JIRO, new File(file)).build();
         }
         try (val context = Context.newBuilder(JIRO).build()) {
-            context.eval(source);
+            val value = context.eval(source);
+            System.out.println("main/0 -> " + value);
         } catch (PolyglotException ex) {
             if (ex.isInternalError()) ex.printStackTrace();
             else System.err.println(ex.getMessage());

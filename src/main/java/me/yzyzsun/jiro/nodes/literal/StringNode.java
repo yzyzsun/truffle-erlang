@@ -2,6 +2,7 @@ package me.yzyzsun.jiro.nodes.literal;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import me.yzyzsun.jiro.nodes.ExpressionNode;
+import me.yzyzsun.jiro.runtime.JiroList;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,6 +16,6 @@ public class StringNode extends ExpressionNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return value;
+        return new JiroList(value);
     }
 }
