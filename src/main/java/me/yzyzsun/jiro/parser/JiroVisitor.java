@@ -10,6 +10,7 @@ import me.yzyzsun.jiro.Jiro;
 import me.yzyzsun.jiro.nodes.ExpressionNode;
 import me.yzyzsun.jiro.nodes.JiroRootNode;
 import me.yzyzsun.jiro.nodes.ModuleNode;
+import me.yzyzsun.jiro.nodes.VariablesNode;
 import me.yzyzsun.jiro.nodes.expression.*;
 import me.yzyzsun.jiro.nodes.literal.*;
 import me.yzyzsun.jiro.nodes.local.BindVariableNode;
@@ -18,6 +19,8 @@ import me.yzyzsun.jiro.nodes.local.ReadArgumentNode;
 import me.yzyzsun.jiro.nodes.local.ReadVariableNodeGen;
 import me.yzyzsun.jiro.runtime.JiroModule;
 import org.antlr.v4.runtime.Token;
+
+import java.math.BigInteger;
 
 public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
     private final Jiro language;
@@ -104,7 +107,11 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
 
     @Override
     public Node visitInteger(CoreErlangParser.IntegerContext ctx) {
-        return new IntegerNode(Long.parseLong(ctx.INTEGER().getText()));
+        try {
+            return new IntegerNode(Long.parseLong(ctx.INTEGER().getText()));
+        } catch (NumberFormatException ex) {
+            return new BigIntegerNode(new BigInteger(ctx.INTEGER().getText()));
+        }
     }
 
     @Override
