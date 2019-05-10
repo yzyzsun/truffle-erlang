@@ -6,12 +6,11 @@ import com.oracle.truffle.api.TruffleLanguage;
 import lombok.val;
 import me.yzyzsun.jiro.nodes.EvalRootNode;
 import me.yzyzsun.jiro.parser.JiroParser;
-import me.yzyzsun.jiro.runtime.JiroContext;
 import me.yzyzsun.jiro.runtime.JiroException;
 import me.yzyzsun.jiro.runtime.JiroFunctionName;
 import me.yzyzsun.jiro.runtime.JiroObject;
 
-@TruffleLanguage.Registration(id = "jiro", name = "Core Erlang")
+@TruffleLanguage.Registration(id = "jiro", name = "Core Erlang", implementationName = "Jiro")
 public class Jiro extends TruffleLanguage<JiroContext> {
     @Override
     protected JiroContext createContext(Env env) {
@@ -24,7 +23,7 @@ public class Jiro extends TruffleLanguage<JiroContext> {
     }
 
     @Override
-    protected CallTarget parse(ParsingRequest request) throws Exception {
+    protected CallTarget parse(ParsingRequest request) {
         val source = request.getSource();
         val module = JiroParser.parse(this, source).getModule();
         val main = module.getFunction(new JiroFunctionName("main", 0), false);

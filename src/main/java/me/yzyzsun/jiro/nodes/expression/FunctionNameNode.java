@@ -7,6 +7,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import lombok.Getter;
 import lombok.val;
 import me.yzyzsun.jiro.Jiro;
+import me.yzyzsun.jiro.JiroContext;
 import me.yzyzsun.jiro.nodes.ExpressionNode;
 import me.yzyzsun.jiro.runtime.*;
 

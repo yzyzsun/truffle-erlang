@@ -8,7 +8,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.RootNode;
 import me.yzyzsun.jiro.Jiro;
-import me.yzyzsun.jiro.runtime.JiroContext;
+import me.yzyzsun.jiro.JiroContext;
 import me.yzyzsun.jiro.runtime.JiroModule;
 import me.yzyzsun.jiro.runtime.JiroNil;
 
