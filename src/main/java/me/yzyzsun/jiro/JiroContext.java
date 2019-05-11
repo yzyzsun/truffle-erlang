@@ -3,6 +3,7 @@ package me.yzyzsun.jiro;
 import com.oracle.truffle.api.TruffleLanguage;
 import lombok.Getter;
 import lombok.var;
+import me.yzyzsun.jiro.nodes.builtin.binop.*;
 import me.yzyzsun.jiro.nodes.builtin.io.FormatBuiltinFactory;
 import me.yzyzsun.jiro.nodes.builtin.io.GetLineBuiltinFactory;
 import me.yzyzsun.jiro.runtime.JiroModule;
@@ -40,6 +41,18 @@ public class JiroContext {
         var module = new JiroModule(language, "io");
         module.installBuiltin(FormatBuiltinFactory.getInstance());
         module.installBuiltin(GetLineBuiltinFactory.getInstance());
+        registerModule(module);
+        module = new JiroModule(language, "erlang");
+        module.installBuiltin(AddBuiltinFactory.getInstance());
+        module.installBuiltin(SubBuiltinFactory.getInstance());
+        module.installBuiltin(MulBuiltinFactory.getInstance());
+        module.installBuiltin(FDivBuiltinFactory.getInstance());
+        module.installBuiltin(IDivBuiltinFactory.getInstance());
+        module.installBuiltin(RemBuiltinFactory.getInstance());
+        module.installBuiltin(NotBuiltinFactory.getInstance());
+        module.installBuiltin(AndBuiltinFactory.getInstance());
+        module.installBuiltin(OrBuiltinFactory.getInstance());
+        module.installBuiltin(XorBuiltinFactory.getInstance());
         registerModule(module);
     }
 }

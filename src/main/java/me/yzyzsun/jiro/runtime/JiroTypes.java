@@ -31,4 +31,14 @@ public abstract class JiroTypes {
     public static JiroBigInteger castBigInteger(long value) {
         return new JiroBigInteger(value);
     }
+
+    @ImplicitCast
+    public static double castDouble(long value) {
+        return value;
+    }
+
+    @ImplicitCast
+    public static double castDouble(JiroBigInteger value) {
+        return value.getValue().doubleValue();
+    }
 }

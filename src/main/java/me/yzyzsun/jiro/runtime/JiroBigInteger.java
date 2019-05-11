@@ -11,7 +11,6 @@ import java.math.BigInteger;
 
 @ExportLibrary(InteropLibrary.class)
 public class JiroBigInteger extends JiroObject {
-
     @Getter private BigInteger value;
 
     public JiroBigInteger(BigInteger value) {
