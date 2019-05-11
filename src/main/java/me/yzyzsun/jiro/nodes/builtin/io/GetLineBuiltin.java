@@ -21,13 +21,13 @@ import java.util.stream.Collectors;
 @BuiltinInfo(identifier = "get_line", arity = 1)
 public abstract class GetLineBuiltin extends BuiltinNode {
     @Specialization
-    public JiroList getLine(JiroList prompt, @CachedContext(Jiro.class) JiroContext context) {
-        print(prompt, context.getOutput());
+    public JiroList getLine(JiroNil prompt, @CachedContext(Jiro.class) JiroContext context) {
         return readLine(context.getInput());
     }
 
     @Specialization
-    public JiroList getLine(JiroNil prompt, @CachedContext(Jiro.class) JiroContext context) {
+    public JiroList getLine(JiroList prompt, @CachedContext(Jiro.class) JiroContext context) {
+        print(prompt, context.getOutput());
         return readLine(context.getInput());
     }
 

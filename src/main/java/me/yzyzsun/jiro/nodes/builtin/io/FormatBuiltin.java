@@ -11,22 +11,14 @@ import me.yzyzsun.jiro.nodes.builtin.BuiltinInfo;
 import me.yzyzsun.jiro.nodes.builtin.BuiltinNode;
 import me.yzyzsun.jiro.runtime.JiroException;
 import me.yzyzsun.jiro.runtime.JiroList;
-import me.yzyzsun.jiro.runtime.JiroNil;
 
 import java.io.PrintWriter;
-import java.util.Collections;
 
 @BuiltinInfo(identifier = "format", arity = 2)
 public abstract class FormatBuiltin extends BuiltinNode {
     @Specialization
     public String format(JiroList fmt, JiroList data, @CachedContext(Jiro.class) JiroContext context) {
         print(context.getOutput(), fmt, data);
-        return "ok";
-    }
-
-    @Specialization
-    public String format(JiroList fmt, JiroNil data, @CachedContext(Jiro.class) JiroContext context) {
-        print(context.getOutput(), fmt, new JiroList(Collections.emptyList()));
         return "ok";
     }
 

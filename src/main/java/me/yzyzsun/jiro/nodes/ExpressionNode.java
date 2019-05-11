@@ -1,10 +1,12 @@
 package me.yzyzsun.jiro.nodes;
 
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import me.yzyzsun.jiro.runtime.*;
 
+@TypeSystemReference(JiroTypes.class)
 public abstract class ExpressionNode extends Node {
     public abstract Object executeGeneric(VirtualFrame frame);
 

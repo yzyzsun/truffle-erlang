@@ -6,6 +6,8 @@ import com.oracle.truffle.api.dsl.TypeCast;
 import com.oracle.truffle.api.dsl.TypeCheck;
 import com.oracle.truffle.api.dsl.TypeSystem;
 
+import java.util.Collections;
+
 @TypeSystem({long.class, JiroBigInteger.class, double.class, boolean.class, String.class, JiroTuple.class,
              JiroList.class, JiroCons.class, JiroBinary.class, JiroNil.class})
 public abstract class JiroTypes {
@@ -18,6 +20,11 @@ public abstract class JiroTypes {
     public static JiroNil asJiroNil(Object value) {
         assert isJiroNil(value);
         return JiroNil.SINGLETON;
+    }
+
+    @ImplicitCast @TruffleBoundary
+    public static JiroList castList(JiroNil value) {
+        return new JiroList(Collections.emptyList());
     }
 
     @ImplicitCast @TruffleBoundary
