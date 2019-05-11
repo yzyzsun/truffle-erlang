@@ -2,6 +2,7 @@ package me.yzyzsun.jiro.nodes.builtin.io;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import lombok.val;
 import lombok.var;
@@ -37,14 +38,26 @@ public abstract class FormatBuiltin extends BuiltinNode {
             case '~': str.append('~'); continue;
             case 'n': str.append('\n'); continue;
             }
-            val value = data.get(count++);
+            Object value;
+            try {
+                value = data.get(count++);
+            } catch (IndexOutOfBoundsException ex) {
+                throw JiroException.badArgument("the number of data items is less than that specified in the format string",
+                                                this, fmt.codePointsToString(), data);
+            }
             switch (ch) {
             case 'c':
-                if (!(value instanceof Long)) throwBadArgumentError();
+                if (!(value instanceof Long)) {
+                    throw JiroException.badArgument("the control sequence expected integer",
+                                                    this, "~" + (char) ch, value);
+                }
                 str.appendCodePoint(((Long) value).intValue());
                 break;
             case 's':
-                if (!(value instanceof JiroList)) throwBadArgumentError();
+                if (!(value instanceof JiroList)) {
+                    throw JiroException.badArgument("the control sequence expected string",
+                                                    this, "~" + (char) ch, value);
+                }
                 val list = (JiroList) value;
                 for (var j = 0; j < list.size(); ++j) str.appendCodePoint(list.codePointAt(j));
                 break;
@@ -58,12 +71,16 @@ public abstract class FormatBuiltin extends BuiltinNode {
                 break;
             }
         }
-        if (count != data.size()) throwBadArgumentError();
+        if (count != data.size()) {
+            throw JiroException.badArgument("the number of data items is more than that specified in the format string",
+                                            this, fmt.codePointsToString(), data);
+        }
         out.print(str.toString());
         out.flush();
     }
 
-    private void throwBadArgumentError() {
-        throw new JiroException("bad argument for 'io:format'", this);
+    @Fallback
+    public Object badArgument(Object fmt, Object data) {
+        throw JiroException.badArgument("expected format string, data list", this, fmt, data);
     }
 }

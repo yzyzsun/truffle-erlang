@@ -2,6 +2,7 @@ package me.yzyzsun.jiro.nodes.builtin.io;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import lombok.val;
 import lombok.var;
@@ -48,5 +49,10 @@ public abstract class GetLineBuiltin extends BuiltinNode {
         for (var i = 0; i < prompt.size(); ++i) str.appendCodePoint(prompt.codePointAt(i));
         out.print(str.toString());
         out.flush();
+    }
+
+    @Fallback
+    public Object badArgument(Object prompt) {
+        throw JiroException.badArgument("expected prompt string", this, prompt);
     }
 }
