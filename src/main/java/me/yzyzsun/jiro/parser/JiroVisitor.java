@@ -17,6 +17,7 @@ import me.yzyzsun.jiro.nodes.local.BindVariableNode;
 import me.yzyzsun.jiro.nodes.local.BindVariableNodeGen;
 import me.yzyzsun.jiro.nodes.local.ReadArgumentNode;
 import me.yzyzsun.jiro.nodes.local.ReadVariableNodeGen;
+import me.yzyzsun.jiro.nodes.pattern.*;
 import me.yzyzsun.jiro.runtime.JiroModule;
 import org.antlr.v4.runtime.Token;
 
@@ -252,7 +253,7 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
 
     @Override
     public Node visitBitstring(CoreErlangParser.BitstringContext ctx) {
-        // Ignore encoding expressions which are implementation-dependent
+        // TODO: Process encoding parameters which are implementation-dependent
         return this.visit(ctx.expression(0));
     }
 
@@ -277,6 +278,13 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
             bindNode[0] = BindVariableNodeGen.create(binding, variables.get(0));
             return new LetNode(bindNode, expr);
         }
+    }
+
+    @Override
+    public Node visitCase(CoreErlangParser.CaseContext ctx) {
+        val expression = (ExpressionNode) this.visit(ctx.expression());
+        val clauses = ctx.clause().stream().map(this::visit).toArray(ClauseNode[]::new);
+        return new CaseNode(expression, clauses);
     }
 
     @Override
@@ -307,5 +315,54 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
             node.add(frameDescriptor.addFrameSlot(variable.getText()));
         }
         return node;
+    }
+
+    @Override
+    public Node visitClause(CoreErlangParser.ClauseContext ctx) {
+        val pattern = (PatternNode) this.visit(ctx.patterns());
+        val guard = (ExpressionNode) this.visit(ctx.expression(0));
+        val expression = (ExpressionNode) this.visit(ctx.expression(1));
+        return new ClauseNode(pattern, guard, expression);
+    }
+
+    @Override
+    public Node visitPatterns(CoreErlangParser.PatternsContext ctx) {
+        if (ctx.pattern().size() == 1) {
+            return this.visit(ctx.pattern(0));
+        } else {
+            val patterns = ctx.pattern().stream().map(this::visit).toArray(PatternNode[]::new);
+            return new PatternsNode(patterns);
+        }
+    }
+
+    @Override
+    public Node visitVariablePattern(CoreErlangParser.VariablePatternContext ctx) {
+        val slot = frameDescriptor.addFrameSlot(ctx.VARIABLE_NAME().getText());
+        return new VariablePatternNode(slot);
+    }
+
+    @Override
+    public Node visitLiteralPattern(CoreErlangParser.LiteralPatternContext ctx) {
+        val literal = (ExpressionNode) this.visit(ctx.atomicLiteral());
+        return new LiteralPatternNode(literal);
+    }
+
+    @Override
+    public Node visitTuplePattern(CoreErlangParser.TuplePatternContext ctx) {
+        val patterns = ctx.pattern().stream().map(this::visit).toArray(PatternNode[]::new);
+        return new TuplePatternNode(patterns);
+    }
+
+    @Override
+    public Node visitListPattern(CoreErlangParser.ListPatternContext ctx) {
+        val patterns = ctx.pattern().stream().map(this::visit).toArray(PatternNode[]::new);
+        return new ListPatternNode(patterns);
+    }
+
+    @Override
+    public Node visitAliasPattern(CoreErlangParser.AliasPatternContext ctx) {
+        val slot = frameDescriptor.addFrameSlot(ctx.VARIABLE_NAME().getText());
+        val pattern = (PatternNode) this.visit(ctx.pattern());
+        return new AliasPatternNode(slot, pattern);
     }
 }
