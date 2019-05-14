@@ -53,6 +53,14 @@ public class JiroContext {
         module.installBuiltin(AndBuiltinFactory.getInstance());
         module.installBuiltin(OrBuiltinFactory.getInstance());
         module.installBuiltin(XorBuiltinFactory.getInstance());
+        module.installBuiltin(EqBuiltinFactory.getInstance());
+        module.installBuiltin(NEBuiltinFactory.getInstance());
+        module.installBuiltin(ExactEqBuiltinFactory.getInstance());
+        module.installBuiltin(ExactNEBuiltinFactory.getInstance());
+        module.installBuiltin(LEBuiltinFactory.getInstance());
+        module.installBuiltin(LTBuiltinFactory.getInstance());
+        module.installBuiltin(GEBuiltinFactory.getInstance());
+        module.installBuiltin(GTBuiltinFactory.getInstance());
         registerModule(module);
     }
 }
