@@ -10,7 +10,7 @@ import lombok.Getter;
 import java.math.BigInteger;
 
 @ExportLibrary(InteropLibrary.class)
-public class JiroBigInteger extends JiroObject {
+public class JiroBigInteger implements JiroObject {
     @Getter private BigInteger value;
 
     public JiroBigInteger(BigInteger value) {
@@ -28,8 +28,12 @@ public class JiroBigInteger extends JiroObject {
     }
 
     @TruffleBoundary
-    public int compareTo(JiroBigInteger val) {
-        return value.compareTo(val.value);
+    public int compareTo(Object obj) {
+        if (obj instanceof JiroBigInteger) return value.compareTo(((JiroBigInteger) obj).value);
+        if (obj instanceof Long) return value.compareTo(BigInteger.valueOf((long) obj));
+        if (obj instanceof Double) return Double.compare(value.doubleValue(), (double) obj);
+        if (obj instanceof String || obj instanceof JiroObject) return -1;
+        throw new ClassCastException();
     }
 
     @Override
