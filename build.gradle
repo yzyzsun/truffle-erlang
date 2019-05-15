@@ -12,13 +12,13 @@ repositories {
     jcenter()
 }
 
-def graalvmVersion = '1.0.0-rc16'
+def graalvmVersion = '19.0.0'
 
 dependencies {
     antlr 'org.antlr:antlr4:4.7.2'
     implementation "org.graalvm.truffle:truffle-api:${graalvmVersion}"
     annotationProcessor "org.graalvm.truffle:truffle-dsl-processor:${graalvmVersion}"
-    implementation "com.typesafe.akka:akka-actor_2.12:2.5.21"
+    implementation "com.typesafe.akka:akka-actor_2.12:2.5.22"
     testImplementation 'junit:junit:4.12'
 }
 
