@@ -20,4 +20,9 @@ public class LetNode extends ExpressionNode {
         return exprNode.executeGeneric(frame);
         // TODO: Remove frame slots when leaving let nodes
     }
+
+    @Override
+    public void markAsTail() {
+        exprNode.markAsTail();
+    }
 }

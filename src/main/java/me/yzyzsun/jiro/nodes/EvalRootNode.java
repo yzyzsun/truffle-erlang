@@ -9,14 +9,17 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.RootNode;
 import me.yzyzsun.jiro.Jiro;
 import me.yzyzsun.jiro.JiroContext;
+import me.yzyzsun.jiro.runtime.JiroFunction;
 import me.yzyzsun.jiro.runtime.JiroModule;
 import me.yzyzsun.jiro.runtime.JiroNil;
+import me.yzyzsun.jiro.runtime.TailCallException;
 
 public class EvalRootNode extends RootNode {
     private final JiroModule module;
     @CompilationFinal private boolean registered = false;
     private final TruffleLanguage.ContextReference<JiroContext> reference;
     @Child private DirectCallNode mainCallNode;
+    private Object[] arguments = new Object[0];
 
     public EvalRootNode(Jiro language, RootCallTarget root, JiroModule module) {
         super(null);
@@ -40,7 +43,14 @@ public class EvalRootNode extends RootNode {
         if (mainCallNode == null) {
             return JiroNil.SINGLETON;
         } else {
-            return mainCallNode.call();
+            for (;;) {
+                try {
+                    return mainCallNode.call(arguments);
+                } catch (TailCallException ex) {
+                    mainCallNode = DirectCallNode.create(((JiroFunction) ex.function).getCallTarget());
+                    arguments = ex.arguments;
+                }
+            }
         }
     }
 }

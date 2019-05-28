@@ -29,4 +29,9 @@ public class CaseNode extends ExpressionNode {
         // TODO: Revert bindings if a guard fails or pattern matching fails half way
         // TODO: Remove frame slots when leaving case nodes
     }
+
+    @Override
+    public void markAsTail() {
+        for (val clause : clauses) clause.expression.markAsTail();
+    }
 }

@@ -49,4 +49,6 @@ public abstract class ExpressionNode extends Node {
     public JiroNil executeNil(VirtualFrame frame) throws UnexpectedResultException {
         return JiroTypesGen.expectJiroNil(executeGeneric(frame));
     }
+
+    public void markAsTail() {}
 }

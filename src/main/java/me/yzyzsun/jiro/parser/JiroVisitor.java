@@ -173,11 +173,13 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
         val argc = ctx.VARIABLE_NAME().size();
         val bindNodes = new BindVariableNode[argc];
         for (var i = 0; i < argc; ++i) {
-            val slot = frameDescriptor.addFrameSlot(ctx.VARIABLE_NAME(i).getText());
+            val slot = frameDescriptor.findOrAddFrameSlot(ctx.VARIABLE_NAME(i).getText());
             val value = new ReadArgumentNode(i);
             bindNodes[i] = BindVariableNodeGen.create(value, slot);
         }
-        val node = new LetNode(bindNodes, (ExpressionNode) this.visit(ctx.expression()));
+        val exprNode = (ExpressionNode) this.visit(ctx.expression());
+        exprNode.markAsTail();
+        val node = new LetNode(bindNodes, exprNode);
         val startIndex = ctx.start.getStartIndex();
         val sourceSection = source.createSection(startIndex, ctx.stop.getStopIndex() - startIndex);
         return new JiroRootNode(language, frameDescriptor, node, sourceSection);
@@ -312,7 +314,7 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
     public Node visitVariables(CoreErlangParser.VariablesContext ctx) {
         val node = new VariablesNode(ctx.VARIABLE_NAME().size());
         for (val variable : ctx.VARIABLE_NAME()) {
-            node.add(frameDescriptor.addFrameSlot(variable.getText()));
+            node.add(frameDescriptor.findOrAddFrameSlot(variable.getText()));
         }
         return node;
     }
@@ -337,7 +339,7 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
 
     @Override
     public Node visitVariablePattern(CoreErlangParser.VariablePatternContext ctx) {
-        val slot = frameDescriptor.addFrameSlot(ctx.VARIABLE_NAME().getText());
+        val slot = frameDescriptor.findOrAddFrameSlot(ctx.VARIABLE_NAME().getText());
         return new VariablePatternNode(slot);
     }
 
@@ -361,7 +363,7 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
 
     @Override
     public Node visitAliasPattern(CoreErlangParser.AliasPatternContext ctx) {
-        val slot = frameDescriptor.addFrameSlot(ctx.VARIABLE_NAME().getText());
+        val slot = frameDescriptor.findOrAddFrameSlot(ctx.VARIABLE_NAME().getText());
         val pattern = (PatternNode) this.visit(ctx.pattern());
         return new AliasPatternNode(slot, pattern);
     }
