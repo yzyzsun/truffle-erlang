@@ -35,8 +35,9 @@ public abstract class GetLineBuiltin extends BuiltinNode {
     @TruffleBoundary
     private JiroList readLine(BufferedReader in) {
         try {
-            val str = in.readLine();
+            var str = in.readLine();
             if (str == null) throw new JiroException("end of input stream reached", this);
+            str += '\n';
             return new JiroList(str.codePoints().asLongStream().boxed().collect(Collectors.toList()));
         } catch (IOException ex) {
             throw new JiroException(ex.getMessage(), this);

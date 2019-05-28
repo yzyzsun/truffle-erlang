@@ -64,11 +64,10 @@ public abstract class FormatBuiltin extends BuiltinNode {
             case 'w':
                 str.append(value);
                 break;
-            case 'f': case 'e': case 'g': case 'p': case 'W': case 'P':
-            case 'B': case 'X': case '#': case 'b': case 'x': case '+':
-                throw new JiroException("'io:format' currently does not support ~" + (char) ch, this);
             case 'i':
                 break;
+            default:
+                throw new JiroException("'io:format' currently does not support ~" + (char) ch, this);
             }
         }
         if (count != data.size()) {
