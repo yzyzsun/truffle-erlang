@@ -1,9 +1,11 @@
 package me.yzyzsun.jiro.runtime;
 
+import lombok.Getter;
 import lombok.val;
 import lombok.var;
 import me.yzyzsun.jiro.Jiro;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class JiroList implements JiroObject {
@@ -25,6 +27,12 @@ public class JiroList implements JiroObject {
         val value = values.get(index);
         if (!(value instanceof Long)) throw new JiroException("expected string but got list: " + toString(), null);
         return ((Long) value).intValue();
+    }
+
+    public JiroList concat(JiroList list) {
+        val result = new ArrayList<Object>(values);
+        result.addAll(list.values);
+        return new JiroList(result);
     }
 
     @Override

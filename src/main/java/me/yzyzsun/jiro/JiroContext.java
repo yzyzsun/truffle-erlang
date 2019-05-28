@@ -61,6 +61,7 @@ public class JiroContext {
         module.installBuiltin(LTBuiltinFactory.getInstance());
         module.installBuiltin(GEBuiltinFactory.getInstance());
         module.installBuiltin(GTBuiltinFactory.getInstance());
+        module.installBuiltin(ConcatBuiltinFactory.getInstance());
         registerModule(module);
     }
 }
