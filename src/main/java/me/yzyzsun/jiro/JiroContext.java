@@ -1,11 +1,14 @@
 package me.yzyzsun.jiro;
 
+import akka.actor.ActorSystem;
 import com.oracle.truffle.api.TruffleLanguage;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.var;
+import me.yzyzsun.jiro.nodes.builtin.FormatBuiltinFactory;
+import me.yzyzsun.jiro.nodes.builtin.GetLineBuiltinFactory;
+import me.yzyzsun.jiro.nodes.builtin.SpawnBuiltinFactory;
 import me.yzyzsun.jiro.nodes.builtin.binop.*;
-import me.yzyzsun.jiro.nodes.builtin.io.FormatBuiltinFactory;
-import me.yzyzsun.jiro.nodes.builtin.io.GetLineBuiltinFactory;
 import me.yzyzsun.jiro.runtime.JiroModule;
 
 import java.io.BufferedReader;
@@ -20,6 +23,7 @@ public class JiroContext {
     @Getter private final BufferedReader input;
     @Getter private final PrintWriter output;
     private final Map<String, JiroModule> modules = new HashMap<>();
+    @Getter @Setter private ActorSystem actorSystem;
 
     public JiroContext(Jiro language, TruffleLanguage.Env env) {
         this.language = language;
@@ -62,6 +66,8 @@ public class JiroContext {
         module.installBuiltin(GEBuiltinFactory.getInstance());
         module.installBuiltin(GTBuiltinFactory.getInstance());
         module.installBuiltin(ConcatBuiltinFactory.getInstance());
+        module.installBuiltin(SendBuiltinFactory.getInstance());
+        module.installBuiltin(SpawnBuiltinFactory.getInstance());
         registerModule(module);
     }
 }

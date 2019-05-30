@@ -1,4 +1,4 @@
-package me.yzyzsun.jiro.nodes.builtin.io;
+package me.yzyzsun.jiro.nodes.builtin;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.CachedContext;

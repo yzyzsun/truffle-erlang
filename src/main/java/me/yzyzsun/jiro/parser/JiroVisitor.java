@@ -321,6 +321,14 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
     }
 
     @Override
+    public Node visitReceive(CoreErlangParser.ReceiveContext ctx) {
+        val clauses = ctx.clause().stream().map(this::visit).toArray(ClauseNode[]::new);
+        val expiry = (ExpressionNode) this.visit(ctx.expression(0));
+        val after = (ExpressionNode) this.visit(ctx.expression(1));
+        return new ReceiveNode(language, clauses, expiry, after);
+    }
+
+    @Override
     public Node visitSequencing(CoreErlangParser.SequencingContext ctx) {
         return new SequencingNode((ExpressionNode) this.visit(ctx.expression(0)),
                                   (ExpressionNode) this.visit(ctx.expression(1)));
