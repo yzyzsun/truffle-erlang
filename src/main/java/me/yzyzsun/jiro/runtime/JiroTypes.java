@@ -9,7 +9,7 @@ import com.oracle.truffle.api.dsl.TypeSystem;
 import java.util.Collections;
 
 @TypeSystem({long.class, JiroBigInteger.class, double.class, boolean.class, String.class, JiroTuple.class,
-             JiroList.class, JiroCons.class, JiroBinary.class, JiroNil.class})
+             JiroList.class, JiroCons.class, JiroBinary.class, JiroFunction.class, JiroNil.class})
 public abstract class JiroTypes {
     @TypeCheck(JiroNil.class)
     public static boolean isJiroNil(Object value) {

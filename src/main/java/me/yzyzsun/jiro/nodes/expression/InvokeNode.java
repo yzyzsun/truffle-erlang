@@ -12,6 +12,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import lombok.var;
 import me.yzyzsun.jiro.nodes.ExpressionNode;
 import me.yzyzsun.jiro.runtime.JiroException;
+import me.yzyzsun.jiro.runtime.JiroFunction;
 import me.yzyzsun.jiro.runtime.TailCallException;
 
 public class InvokeNode extends ExpressionNode {
@@ -27,7 +28,7 @@ public class InvokeNode extends ExpressionNode {
 
     @Override @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
-        var function = functionNode.executeGeneric(frame);
+        var function = (JiroFunction) functionNode.executeGeneric(frame);
         CompilerAsserts.compilationConstant(argumentNodes.length);
         var arguments = new Object[argumentNodes.length];
         for (var i = 0; i < argumentNodes.length; ++i) {

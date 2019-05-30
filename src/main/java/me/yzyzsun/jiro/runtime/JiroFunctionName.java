@@ -7,6 +7,10 @@ public class JiroFunctionName {
     @Getter private final String identifier;
     @Getter private final int arity;
 
+    public static JiroFunctionName anonymous(int arity) {
+        return new JiroFunctionName("<ANONYMOUS>", arity);
+    }
+
     public JiroFunctionName(String identifier, int arity) {
         this.identifier = identifier;
         this.arity = arity;

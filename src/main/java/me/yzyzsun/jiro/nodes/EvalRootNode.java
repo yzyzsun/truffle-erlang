@@ -47,7 +47,7 @@ public class EvalRootNode extends RootNode {
                 try {
                     return mainCallNode.call(arguments);
                 } catch (TailCallException ex) {
-                    mainCallNode = DirectCallNode.create(((JiroFunction) ex.function).getCallTarget());
+                    mainCallNode = DirectCallNode.create(ex.function.getCallTarget());
                     arguments = ex.arguments;
                 }
             }

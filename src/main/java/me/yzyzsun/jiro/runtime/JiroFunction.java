@@ -6,7 +6,6 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.DirectCallNode;
@@ -19,7 +18,7 @@ import me.yzyzsun.jiro.Jiro;
 import me.yzyzsun.jiro.nodes.UndefinedRootNode;
 
 @ExportLibrary(InteropLibrary.class)
-public class JiroFunction implements TruffleObject {
+public class JiroFunction implements JiroObject {
     public static final int INLINE_CACHE_SIZE = 3;
 
     @Getter private final JiroFunctionName functionName;
@@ -44,6 +43,16 @@ public class JiroFunction implements TruffleObject {
 
     public Assumption getCallTargetStable() {
         return callTargetStable.getAssumption();
+    }
+
+    @Override
+    public int compareTo(Object obj) {
+        if (obj instanceof JiroFunction) {
+            return functionName.toString().compareTo(((JiroFunction) obj).functionName.toString());
+        }
+        if (obj instanceof Long || obj instanceof Double || obj instanceof JiroBigInteger || obj instanceof String) return 1;
+        if (obj instanceof JiroObject) return -1;
+        throw new ClassCastException();
     }
 
     @Override

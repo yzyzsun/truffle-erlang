@@ -18,6 +18,8 @@ import me.yzyzsun.jiro.nodes.local.BindVariableNodeGen;
 import me.yzyzsun.jiro.nodes.local.ReadArgumentNode;
 import me.yzyzsun.jiro.nodes.local.ReadVariableNodeGen;
 import me.yzyzsun.jiro.nodes.pattern.*;
+import me.yzyzsun.jiro.runtime.JiroFunction;
+import me.yzyzsun.jiro.runtime.JiroFunctionName;
 import me.yzyzsun.jiro.runtime.JiroModule;
 import org.antlr.v4.runtime.Token;
 
@@ -154,7 +156,7 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
     public Node visitFunctionDefinition(CoreErlangParser.FunctionDefinitionContext ctx) {
         frameDescriptor = new FrameDescriptor();
         val functionName = ((FunctionNameNode) this.visit(ctx.functionName())).getFunctionName();
-        val root = (JiroRootNode) this.visit(ctx.fun());
+        val root = visitFunRoot(ctx.fun());
         root.setName(functionName.toString());
         currentModule.registerFunction(functionName, Truffle.getRuntime().createCallTarget(root));
         return null;
@@ -168,8 +170,8 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
         return new FunctionNameNode(language, currentModule.getName(), identifier, arity, false);
     }
 
-    @Override
-    public Node visitFun(CoreErlangParser.FunContext ctx) {
+
+    private JiroRootNode visitFunRoot(CoreErlangParser.FunContext ctx) {
         val argc = ctx.VARIABLE_NAME().size();
         val bindNodes = new BindVariableNode[argc];
         for (var i = 0; i < argc; ++i) {
@@ -179,10 +181,18 @@ public class JiroVisitor extends CoreErlangBaseVisitor<Node> {
         }
         val exprNode = (ExpressionNode) this.visit(ctx.expression());
         exprNode.markAsTail();
-        val node = new LetNode(bindNodes, exprNode);
+        val letNode = new LetNode(bindNodes, exprNode);
         val startIndex = ctx.start.getStartIndex();
         val sourceSection = source.createSection(startIndex, ctx.stop.getStopIndex() - startIndex);
-        return new JiroRootNode(language, frameDescriptor, node, sourceSection);
+        return new JiroRootNode(language, frameDescriptor, letNode, sourceSection);
+    }
+
+    @Override
+    public Node visitFun(CoreErlangParser.FunContext ctx) {
+        val rootNode = visitFunRoot(ctx);
+        val function = new JiroFunction(language, JiroFunctionName.anonymous(ctx.VARIABLE_NAME().size()));
+        function.setCallTarget(Truffle.getRuntime().createCallTarget(rootNode));
+        return new FunNode(function);
     }
 
     @Override
