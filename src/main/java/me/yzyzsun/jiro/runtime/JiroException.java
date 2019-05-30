@@ -7,6 +7,7 @@ import lombok.val;
 import me.yzyzsun.jiro.nodes.builtin.BuiltinInfo;
 
 import java.util.Arrays;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class JiroException extends RuntimeException implements TruffleException {
@@ -29,7 +30,8 @@ public class JiroException extends RuntimeException implements TruffleException 
         if (info != null) msg.append(info.identifier()).append('/').append(info.arity()).append(' ');
         msg.append("bad argument: ");
         if (!message.isEmpty()) msg.append(message).append(": ");
-        msg.append(Arrays.stream(arguments).map(Object::toString).collect(Collectors.joining(", ")));
+        Function<Object, String> toString = x -> x == null ? "null" : x.toString();
+        msg.append(Arrays.stream(arguments).map(toString).collect(Collectors.joining(", ")));
         return new JiroException(msg.toString(), node);
     }
 }
