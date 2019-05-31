@@ -1,0 +1,18 @@
+module 'fact' ['main'/0] attributes []
+'fact'/1 =
+    fun (_0) ->
+        apply 'fact'/2 (_0, 1)
+'fact'/2 =
+    fun (_1,_0) ->
+        case <_1,_0> of
+          <0,X> when 'true' ->
+              X
+          <N,X> when 'true' ->
+              let <_3> = call 'erlang':'-' (N, 1)
+              in  let <_2> = call 'erlang':'*' (N, X)
+                  in  apply 'fact'/2 (_3, _2)
+        end
+'main'/0 =
+    fun () ->
+        apply 'fact'/1 (200000)
+end

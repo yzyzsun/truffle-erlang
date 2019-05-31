@@ -1,0 +1,12 @@
+module 'actor' ['main'/0] attributes []
+'main'/0 =
+    fun () ->
+        let <_0> =
+            fun () ->
+                receive
+                  <{'print',X}> when 'true' ->
+                      call 'io':'format' ("~w~n", [X])
+                after 'infinity' -> 'true'
+        in  let <Pid> = call 'erlang':'spawn' (_0)
+            in  call 'erlang':'!' (Pid, {'print','ok'})
+end

@@ -1,0 +1,18 @@
+module 'concat' ['main'/0] attributes []
+'concat'/1 =
+    fun (_0) ->
+        apply 'concat'/2 (_0, [])
+'concat'/2 =
+    fun (_0,_1) ->
+        case <_0,_1> of
+          <0,S> when 'true' ->
+              S
+          <N,S> when 'true' ->
+              let <_3> = call 'erlang':'-' (N, 1)
+              in  let <_2> = call 'erlang':'++' (S, [0])
+                  in  apply 'concat'/2 (_3, _2)
+        end
+'main'/0 =
+    fun () ->
+        apply 'concat'/1 (100000)
+end

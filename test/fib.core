@@ -1,0 +1,19 @@
+module 'fib' ['main'/0] attributes []
+'fib'/1 =
+    fun (_0) ->
+        case _0 of
+          <0> when 'true' ->
+              0
+          <1> when 'true' ->
+              1
+          <X> when 'true' ->
+              let <_3> = call 'erlang':'-' (X, 1)
+              in  let <_4> = apply 'fib'/1 (_3)
+                  in  let <_1> = call 'erlang':'-' (X, 2)
+                      in  let <_2> = apply 'fib'/1 (_1)
+                          in  call 'erlang':'+' (_4, _2)
+        end
+'main'/0 =
+    fun () ->
+        apply 'fib'/1 (24)
+end

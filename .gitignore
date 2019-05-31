@@ -26,5 +26,9 @@
 /nbdist/
 /.nb-gradle/
 
+### Erlang ###
+erl_crash.dump
+*.beam
+
 ### macOS ###
 .DS_Store

@@ -1,0 +1,19 @@
+module 'ack' ['main'/0] attributes []
+'ack'/2 =
+    fun (_0,_1) ->
+        case <_0,_1> of
+          <0,N> when 'true' ->
+              call 'erlang':'+' (N, 1)
+          <M,0> when 'true' ->
+              let <_2> = call 'erlang':'-' (M, 1)
+              in  apply 'ack'/2 (_2, 1)
+          <M,N> when 'true' ->
+              let <_5> = call 'erlang':'-' (M, 1)
+              in  let <_3> = call 'erlang':'-' (N, 1)
+                  in  let <_4> = apply 'ack'/2 (M, _3)
+                      in  apply 'ack'/2 (_5, _4)
+        end
+'main'/0 =
+    fun () ->
+        apply 'ack'/2 (2, 4)
+end

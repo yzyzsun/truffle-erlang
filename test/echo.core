@@ -1,0 +1,6 @@
+module 'echo' ['main'/0] attributes []
+'main'/0 =
+    fun () ->
+        let <_0> = call 'io':'get_line' ("")
+        in  call 'io':'format' ("~s", [_0])
+end

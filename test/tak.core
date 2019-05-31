@@ -1,0 +1,19 @@
+module 'tak' ['main'/0] attributes []
+'tak'/3 =
+    fun (_X_X_0,_X_X_1,_X_X_2) ->
+        case <_X_X_0,_X_X_1,_X_X_2> of
+          <X,Y,Z> when call 'erlang':'<' (Y, X) ->
+              let <_X_X_7> = call 'erlang':'-' (X, 1)
+              in  let <_X_X_8> = apply 'tak'/3 (_X_X_7, Y, Z)
+                  in  let <_X_X_5> = call 'erlang':'-' (Y, 1)
+                      in  let <_X_X_6> = apply 'tak'/3 (_X_X_5, Z, X)
+                          in  let <_X_X_3> = call 'erlang':'-' (Z, 1)
+                              in  let <_X_X_4> = apply 'tak'/3 (_X_X_3, X, Y)
+                                  in  apply 'tak'/3 (_X_X_8, _X_X_6, _X_X_4)
+          <_X_X_12,_X_X_13,Z> when 'true' ->
+              Z
+        end
+'main'/0 =
+    fun () ->
+        apply 'tak'/3 (30, 20, 10)
+end

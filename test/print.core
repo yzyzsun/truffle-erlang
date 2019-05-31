@@ -1,0 +1,6 @@
+module 'print' ['main'/0] attributes []
+'main'/0 =
+    fun () ->
+        call 'io':'format'
+            ("~c~s~w~n", [66, [69, 74], {4, 8.6, []}])
+end
